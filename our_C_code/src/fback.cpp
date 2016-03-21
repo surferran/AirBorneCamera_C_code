@@ -1,23 +1,23 @@
-#include "opencv2/video/tracking.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/videoio/videoio.hpp"
-#include "opencv2/highgui/highgui.hpp"
+//#include "opencv2/video/tracking.hpp"
+//#include "opencv2/imgproc/imgproc.hpp"
+//#include "opencv2/videoio/videoio.hpp"
+//#include "opencv2/highgui/highgui.hpp"
+//TODO: change this file name from 'fback' to 'DOF'
 
 #include <iostream>
 
 using namespace cv;
 using namespace std;
 
+#include "app_globals.h"
+
 #include "writeMat.cpp"
 
 static void help()
 {
     cout <<
-            "\nThis program demonstrates ---dense optical flow--- algorithm by Gunnar Farneback\n"
-            "Mainly the function: calcOpticalFlowFarneback()\n"
-            "Call:\n"
-            "./fback\n"
-            "This reads from video camera 0\n" << endl;
+            "\nThis section implements ---dense optical flow--- algorithm by Gunnar Farneback\n"
+             << endl;
 }
 static void drawOptFlowMap(const Mat& flow, Mat& cflowmap, int step,
                     double vecFactor, const Scalar& color)
@@ -49,11 +49,8 @@ int do_DOF(int, char**, bool vid_from_file)
 	{
 		
 		//	char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\2_movement1_several_cars.00.avi";
-
-		//char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\MOVI0024.avi";
+		//  char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\MOVI0024.avi";
 		char			rec_file_name[150] = "../work_files/cars.avi";
-		//char			rec_file_name[150] = "C:/Users/Ran_the_User/Documents/GitHub/AirBorneCamera_C_code/our_C_code/work_files/cars.mov";
-
 		cap					= VideoCapture(rec_file_name);
 	}
 
@@ -79,6 +76,7 @@ int do_DOF(int, char**, bool vid_from_file)
         {
 //			clock_t begin = clock();
 
+			/* calc optical flow between two frames */
             calcOpticalFlowFarneback(prevgray, gray, uflow, 0.5, 3, 15, 3, 5, 1.2, 0); // 'uflow' is the DOF matrix result
 
 //			clock_t end = clock();
@@ -90,16 +88,21 @@ int do_DOF(int, char**, bool vid_from_file)
 			// TODO: add frame counter on top of image to display. in corner
             uflow.copyTo(flow);
             drawOptFlowMap(flow, cflow, 10/*16*/, 15, Scalar(0, 255, 0)); // every 16 pixels flow is displayed. 
+
             imshow("flow", cflow);
-			//  TODO: 
-			//  add saving the mat to im file
-			// add saving those two into accumulating aray file. for multi frame recording.
 
-			file_full_name = base_out_file_path + base_file_name + std::to_string(++stream_frame_index) + file_suffix;
+			if (App_Parameters.flags.export_frames_to_Mat) {
+				//  TODO: 
+				//  add saving the mat to im file
+				// add saving those two into accumulating aray file. for multi frame recording.
 
-			const char * c = file_full_name.c_str();
-			writeMat(flow, c , "DOFframe" ,true, 0); //get returned byte . send number of images to be saved
+				file_full_name = base_out_file_path + base_file_name + std::to_string(++stream_frame_index) + file_suffix;
+
+				const char * c = file_full_name.c_str();
+				writeMat(flow, c, "DOFframe", true, 0); //get returned byte . send number of images to be saved
+			}
         }
+
         if(waitKey(1.3)>=0)
             break;
         std::swap(prevgray, gray);
