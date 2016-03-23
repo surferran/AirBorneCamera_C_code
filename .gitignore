@@ -51,3 +51,5 @@ Temporary Items
 our_C_code/Debug/AirborneCam.pdb
 *.idb
 our_C_code/AirborneCamera/Debug/vc140.pdb
+*.suo
+*.suo

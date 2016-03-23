@@ -11,7 +11,7 @@
  *
  * This implementation is created for the specific purpose of creating
  * over-segmentations in an OpenCV-based environment.
- */
+ 
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -19,7 +19,7 @@
 #include <math.h>
 #include <vector>
 #include <float.h>
-using namespace std;
+using namespace std;*/
 
 /* 2d matrices are handled by 2d vectors. */
 #define vec2dd vector<vector<double> >

@@ -13,7 +13,7 @@ using namespace std;
 
 #include "writeMat.cpp"
 
-static void help()
+static void help_fback()
 {
     cout <<
             "\nThis section implements ---dense optical flow--- algorithm by Gunnar Farneback\n"
@@ -46,28 +46,32 @@ int do_DOF(int, char**, bool vid_from_file)
 	if (!vid_from_file)
 	    cap = VideoCapture(0);
 	else
-	{
-		
+	{		
 		//	char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\2_movement1_several_cars.00.avi";
 		//  char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\MOVI0024.avi";
 		char			rec_file_name[150] = "../work_files/cars.avi";
 		cap					= VideoCapture(rec_file_name);
 	}
 
-    help();
+    help_fback();
     if( !cap.isOpened() )
         return -1;
 
     Mat flow, cflow, frame;
     UMat gray, prevgray, uflow;
+	double t ; //for timings
+	double measure_times[100000]; // for keeping times. // this is a trial item
+	int frame_counter = 0 ;
+
     namedWindow("flow", 1);
 
     for(;;)
     {
         cap >> frame;
-		
+		if (frame.empty())
+			break;
 		// TODO: add test for empty frame. break if empty
-
+		frame_counter++;
 	///	resize(frame, frame, newSize , 0, 0, INTER_CUBIC); 
 
         cvtColor(frame, gray, COLOR_BGR2GRAY);
@@ -76,9 +80,16 @@ int do_DOF(int, char**, bool vid_from_file)
         {
 //			clock_t begin = clock();
 
+			if (App_Parameters.flags.measure_actions_timing)
+				t = (double)getTickCount();
+
 			/* calc optical flow between two frames */
             calcOpticalFlowFarneback(prevgray, gray, uflow, 0.5, 3, 15, 3, 5, 1.2, 0); // 'uflow' is the DOF matrix result
 
+			if (App_Parameters.flags.measure_actions_timing){
+				t								= 1000*((double)getTickCount() - t)/getTickFrequency();
+				measure_times[frame_counter]	= t;
+			}
 //			clock_t end = clock();
 //			double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
 //			printf("**MyProgram::after time= %d\n", elapsed_secs);
@@ -103,9 +114,20 @@ int do_DOF(int, char**, bool vid_from_file)
 			}
         }
 
-        if(waitKey(1.3)>=0)
+        if(waitKey(1.0)>=0)
             break;
         std::swap(prevgray, gray);
     }
+	
+	//sum(measure_times);
+	double sum=0, avg_time=0;
+	for (int i=2; i<frame_counter; i++)//index 0,1 are not populated in the time array
+		sum	+=	measure_times[i];
+	avg_time	=	sum / frame_counter; 
+
+	cout << "Time of optical flow in "	<< frame_counter << " frames: " << sum << " milliseconds."<< endl;
+	cout << "average Time is: " << avg_time << " milliseconds."<< endl;
+	//TODO: add printout in ~performance graph.
+
     return 0;
 }

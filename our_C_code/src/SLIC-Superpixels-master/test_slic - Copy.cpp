@@ -5,7 +5,7 @@
  *
  * This file creates an over-segmentation of a provided image based on the SLIC
  * superpixel algorithm, as implemented in slic.h and slic.cpp.
- 
+ */
  
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -13,20 +13,20 @@
 #include <math.h>
 #include <vector>
 #include <float.h>
-using namespace std;*/
+using namespace std;
 
 #include "slic.h"
 
-int run_test_slic(/*int argc, char *argv[]*/) {
+int run_test_slic(int argc, char *argv[]) {
     /* Load the image and convert to Lab colour space. */
-    IplImage *image = cvLoadImage("dog.png", 1);
+    IplImage *image = cvLoadImage(argv[1], 1);
     IplImage *lab_image = cvCloneImage(image);
     cvCvtColor(image, lab_image, CV_BGR2Lab);
     
     /* Yield the number of superpixels and weight-factors from the user. */
     int w = image->width, h = image->height;
-    int nr_superpixels = 400;//atoi(argv[2]);
-    int nc = 40;//atoi(argv[3]);
+    int nr_superpixels = atoi(argv[2]);
+    int nc = atoi(argv[3]);
 
     double step = sqrt((w * h) / (double) nr_superpixels);
     
@@ -39,5 +39,5 @@ int run_test_slic(/*int argc, char *argv[]*/) {
     slic.display_contours(image, CV_RGB(255,0,0));
     cvShowImage("result", image);
     cvWaitKey(0);
-    cvSaveImage("myoutput.png", image);
+    cvSaveImage(argv[4], image);
 }

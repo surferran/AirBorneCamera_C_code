@@ -13,9 +13,9 @@ struct Alg_parameters {
 
 };
 struct App_flags {
-	bool	read_from_file			= true;   // false - for live capture from camera(0)
+	bool	read_from_file			= true;   // true-read video file. false - for live capture from camera(0)
 	bool	convert_RGB_2_Gray		= true;	// need for preparing rgb(or BRG) frames to optical flow calculation
-	bool	measure_actions_timing	= false;	// TODO: complete this function , in several code points.
+	bool	measure_actions_timing	= true;	// to measure spesific calculations timings
 	bool	record_outputs			= false;	// save frames into physical .avi files.
 	bool	export_frames_to_Mat	= false;	// save frames into seperate .mat files. // for only optical flow (and slic?) now
 
