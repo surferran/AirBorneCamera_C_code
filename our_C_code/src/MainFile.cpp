@@ -24,7 +24,7 @@ using namespace std;
 #include "fback.cpp"
 
 #ifdef TUTUR_AND_TRIALS_MODE
-#include "another\SLIC.cpp"
+//#include "another\SLIC.cpp"
 
 // ref by: http://docs.opencv.org/2.4/doc/tutorials/core/how_to_scan_images/how_to_scan_images.html
 // input line can be : C:\OpenCV\sources\samples\data\aero1.jpg 20
@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 
 #ifdef TUTUR_AND_TRIALS_MODE
 	//run_test_slic();
-	do_slic(argc,argv);
+//	do_slic(argc,argv);
 	return 0;
 #endif
 
