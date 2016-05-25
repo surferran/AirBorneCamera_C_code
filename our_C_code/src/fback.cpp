@@ -39,7 +39,7 @@ static void drawOptFlowMap(const Mat& flow, Mat& cflowmap, int step,
 
 Mat& calc_bpm(Mat& I)  //I is magnitude //float32
 {
-	float	der_mag ,	b_m_p,		lambda_m = 0.7;
+	float	der_mag ,	b_m_p,		lambda_m = 0.7; // can be about 0.7 to 1.5, or else..
 	
 	// accept only char type matrices
 	CV_Assert(I.depth() != sizeof(float));
@@ -66,7 +66,7 @@ Mat& calc_bpm(Mat& I)  //I is magnitude //float32
 
 bool calc_bpTheta( Mat& I ,Mat& out_bpTheta )  //I is angle //float32
 {
-	float 	ang,		ang_nom,			delta_ang_max,		temp,
+	float 	ang_diff,		ang_nom,			delta_ang_max,		temp,
 				b_theta_p,			lambda_t = 1;
 	int		mask = 10;
 
@@ -82,13 +82,16 @@ bool calc_bpTheta( Mat& I ,Mat& out_bpTheta )  //I is angle //float32
 										  //int nDims = I.dims;
 	int i,j;
 	float* p;
+	float* p_1,*p1;
 	float* pT;
 	////p = I.ptr<float>(0.0);
-	for( i = 0; i < nRows-0; ++i)
+	for( i = 1; i < nRows-1; ++i)
 	{
 		p = I.ptr<float>(i);
+		p_1 = I.ptr<float>(i-1);
+		p1  = I.ptr<float>(i+1);
 		pT = out_bpTheta.ptr<float>(i);
-		for ( j = 0; j < nCols-0 ; ++j )
+		for ( j = 1; j < nCols-1 ; ++j )
 		{		
 			b_theta_p = 0;
 			if ( (j > mask) && (i > mask) && (j < nCols - mask) && (i < nRows - mask) )
@@ -96,20 +99,33 @@ bool calc_bpTheta( Mat& I ,Mat& out_bpTheta )  //I is angle //float32
 				// find the biggest angle difference for the b_theta_p
 				delta_ang_max	= 0;
 				ang_nom			= p[j];
-				// remember that j,i+1 smaller then size of matrix cols,rows  . just keep mask>1 always
-				for (int ang1 = -1; ang1 < 1; ang1++)
-				{
-					for (int ang2 = -1; ang2 < 1; ang2++)
-					{
-						if (ang1 != 0 || ang2 != 0)
-						{
-							ang = p[i + ang1 , j + ang2 ];
-							temp = pow(abs(ang - ang_nom), 2);
-							if (delta_ang_max < temp)
-								delta_ang_max = temp;
-						}
-					}
-				}
+				//// remember that j,i+1 smaller then size of matrix cols,rows  . just keep mask>1 always
+				//for (int ang1 = -1; ang1 < 1; ang1++)
+				//{
+				//	for (int ang2 = -1; ang2 < 1; ang2++)
+				//	{
+				//		if (ang1 != 0 || ang2 != 0)
+				//		{
+				//			ang = p[i + ang1 , j + ang2 ];      /// TODO: verify correctness of this!
+				//			temp = pow(abs(ang - ang_nom), 2);
+				//			if (delta_ang_max < temp)
+				//				delta_ang_max = temp;
+				//		}
+				//	}
+				//}
+
+				// check the side elements
+				ang_diff = ((p[j-1]-p[j])*(p[j-1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
+				ang_diff = ((p[j+1]-p[j])*(p[j+1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
+				// check the above elements
+				ang_diff = ((p_1[j-1]-p[j])*(p_1[j-1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
+				ang_diff = ((p_1[j]  -p[j])*(p_1[j]  -p[j])); 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
+				ang_diff = ((p_1[j+1]-p[j])*(p_1[j+1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
+				// check the buttom elements
+				ang_diff = ((p1[j-1]-p[j])*(p1[j-1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
+				ang_diff = ((p1[j]  -p[j])*(p1[j]  -p[j])); 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
+				ang_diff = ((p1[j+1]-p[j])*(p1[j+1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
+
 				b_theta_p = 1 - exp(-lambda_t * delta_ang_max);
 				
 			}
@@ -123,7 +139,8 @@ bool calc_bpTheta( Mat& I ,Mat& out_bpTheta )  //I is angle //float32
 
 Mat& calc_bp_total(Mat& bpm, Mat& bpTheta)  //I is magnitude //float32
 {
-	float	T_threshold		= 0.023;//0.025;  //0.08
+	float	T_threshold_top	= 0.023;//0.025;  //0.08
+	float	T_threshold_low	= 0.007;
 	float	T2_threshold	= 0.077;//0.20; // 0.05
 	
 	// accept only char type matrices
@@ -143,7 +160,7 @@ Mat& calc_bp_total(Mat& bpm, Mat& bpTheta)  //I is magnitude //float32
 		pT = bpTheta.ptr<float>(i);
 		for ( j = 0; j < nCols ; ++j )
 		{		
-			if (p[j] <= T_threshold) //T-threshold
+			if ( (p[j] <= T_threshold_top) && (p[j] > T_threshold_low) )
 			{
 				p[j] *= pT[j];
 			}	
@@ -369,7 +386,7 @@ Mat& calc_total_8_votes(Mat& out1, Mat& out2, Mat& out3, Mat& out4, Mat& totalVo
 
 
 
-void showFlowSobel4gradients(const Mat &flow){
+void calc_motion_boundaries(const Mat &flow){
 	//extraxt x and y channels
 	cv::Mat xy[2]; //X,Y
 	cv::split(flow, xy);
@@ -378,16 +395,18 @@ void showFlowSobel4gradients(const Mat &flow){
 	cv::Mat magnitude, angle;
 	cv::Mat magnitude_grad, angle_grad;
 	cv::cartToPolar(xy[0], xy[1], magnitude, angle, false);
-
+	//// TODO: put these plots under 'debug_level_flags' to allow imidiaate plot enable/disable
+	//imshow("magnitude",magnitude);
+	//imshow("angle",angle);
+	
 	//Sobel( magnitude, magnitude_grad, CV_32F, 0, 1, 3/*, scale, delta, BORDER_DEFAULT*/ );
 	Laplacian( magnitude, magnitude_grad, CV_32F);
 	//Sobel( angle, angle_grad, CV_32F, 0,1, 3/*, scale, delta, BORDER_DEFAULT*/ );
 	Laplacian( angle, angle_grad, CV_32F);
 	
-	bool skipPart = false;   /// need not skip because normalization is needed for boundaary crossings limits checks
-	double mag_max;
-	double mag_grad_max;
-	if (!skipPart) // skip that display part for now
+	double mag_max,			angle_max;
+	double mag_grad_max,	angle_grad_max;
+	
 	{
 		////////// section only for display intermidiate motion bouderies //////////
 		//translate magnitude to range [0;1]
@@ -398,18 +417,31 @@ void showFlowSobel4gradients(const Mat &flow){
 		cv::minMaxLoc(magnitude_grad, 0, &mag_grad_max);
 		magnitude_grad.convertTo(magnitude_grad, -1, 1.0 / mag_grad_max);
 
-		//build hsv image
-		cv::Mat _hsv[3], hsv;
-		_hsv[0] = angle_grad;
-		_hsv[1] = cv::Mat::ones(angle.size(), CV_32F);
-		_hsv[2] = magnitude_grad;
-		cv::merge(_hsv, 3, hsv);
+		cv::minMaxLoc(angle, 0, &angle_max);
+		angle.convertTo(angle, -1, 1.0 / angle_max);
 
-		//convert to BGR and show
-		cv::Mat bgr;//CV_32FC3 matrix
-		cv::cvtColor(hsv, bgr, cv::COLOR_HSV2BGR);
-		cv::imshow("optical flow _grad trial internet", bgr);
-		////////// end of section only for display intermidiate motion bouderies //////////
+		//translate magnitude to range [0;1]
+		cv::minMaxLoc(angle_grad, 0, &angle_grad_max);
+		angle_grad.convertTo(angle_grad, -1, 1.0 / angle_grad_max);
+
+		////normalized plots
+		//imshow("magnitude normalized",magnitude); 
+		//imshow("angle normalized",angle);
+		//imshow("magnitude grad normalized",magnitude_grad); 
+		//imshow("angle grad normalized",angle_grad);
+
+		////build hsv image
+		//cv::Mat _hsv[3], hsv;
+		//_hsv[0] = angle_grad;
+		//_hsv[1] = cv::Mat::ones(angle.size(), CV_32F);
+		//_hsv[2] = magnitude_grad;
+		//cv::merge(_hsv, 3, hsv);
+
+		////convert to BGR and show
+		//cv::Mat bgr;//CV_32FC3 matrix
+		//cv::cvtColor(hsv, bgr, cv::COLOR_HSV2BGR);
+		//cv::imshow("optical flow _grad trial internet", bgr);
+		//////////// end of section only for display intermidiate motion bouderies //////////
 	}
 
 	Mat tmp,
@@ -422,30 +454,42 @@ void showFlowSobel4gradients(const Mat &flow){
 		totalVotes;
 
 	magnitude_grad	=	calc_bpm(magnitude_grad);
-	imshow("new mag grad ",magnitude_grad);
+	imshow("new mag grad as B_P_M ",magnitude_grad);
 
 	calc_bpTheta(angle, tmp);  
-	imshow("new angle",tmp);
+	imshow("new angle as B_P_TH",tmp);
 
 	bp =   calc_bp_total(magnitude_grad, tmp);
 
-	if (!skipPart) {// skip that normalization part
+	{
 		minMaxLoc(bp, 0, &mag_grad_max);
 		bp.convertTo(bp, -1, 1.0 / mag_grad_max);
 	}
-	imshow("new bp",bp);
 
+	imshow(" B_P",bp);
+
+		////medianBlur	(bp,	bp,	3);//9
+		//erode		(bp,	bp,	Mat());
+		//dilate		(bp,	bp,	Mat());
+
+		dilate		(bp,	bp,	Mat());
+		medianBlur	(bp,	bp,	5);//9
+		erode		(bp,	bp,	Mat()); ///
+
+	imshow("new B_P",bp);
+
+	/* pass to function of 'calc_S_matrices' */
 	// calculate votes for several directions :
 	out1 = calc_votes_1(bp,out1);			//horizontal DIRECTION
-	imshow("new vote1",out1);
+	//imshow("new vote1",out1);
 
 	transpose(bp, tmp); // original bp is now transposed into 'tmp'
 	out2 = calc_votes_1(tmp,out2);			//vertical DIRECTION
 	transpose(out2, out2);	// transpose back the outcome
-	imshow("new vote2",out2);
+	//imshow("new vote2",out2);
 
 	out3 = calc_votes_2(bp, out3);	// calc diagonal crosses 
-	imshow("new vote3",out3);
+	//imshow("new vote3",out3);
 
 	float *p;
 	float *pO;
@@ -476,7 +520,7 @@ void showFlowSobel4gradients(const Mat &flow){
 	//	}
 	//}
 	flip(tmp2,out4,1);
-	imshow("new vote4",out4);
+	//imshow("new vote4",out4);
 
 	totalVotes= calc_total_8_votes(out1,out2,out3,out4,totalVotes);
 	imshow("total votes",totalVotes);
@@ -507,9 +551,9 @@ int do_DOF(int, char**, bool vid_from_file)
 	    cap = VideoCapture(0);
 	else
 	{		
-		//	char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\2_movement1_several_cars.00.avi";
+			char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\2_movement1_several_cars.00.avi";
 		//  char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\MOVI0024.avi";
-		char			rec_file_name[150] = "../work_files/cars.avi";
+		//char			rec_file_name[150] = "../work_files/cars.avi";
 		//char			rec_file_name[150] = "../work_files/car1.MP4";
 		//char			rec_file_name[150] = "../work_files/4.mov";
 		//char			rec_file_name[150] = "../work_files/car2.mov";
@@ -544,9 +588,7 @@ int do_DOF(int, char**, bool vid_from_file)
         cvtColor(frame, gray, COLOR_BGR2GRAY);
 
         if( !prevgray.empty() )
-        {
-//			clock_t begin = clock();
-
+        { 
 			if (App_Parameters.flags.measure_actions_timing)
 				t = (double)getTickCount();
 
@@ -557,9 +599,8 @@ int do_DOF(int, char**, bool vid_from_file)
 				t								= 1000*((double)getTickCount() - t)/getTickFrequency();
 				measure_times[frame_counter]	= t;
 			}
-//			clock_t end = clock();
-//			double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-//			printf("**MyProgram::after time= %d\n", elapsed_secs);
+
+			//do_SLIC();
 
 			/* manipulate the frame for user display. into 'cflow' matrix */
             cvtColor(prevgray, cflow, COLOR_GRAY2BGR);	// previous step video frame -> 'cflow'
@@ -568,8 +609,10 @@ int do_DOF(int, char**, bool vid_from_file)
 			cflow.copyTo(cflow2);
             drawOptFlowMap(flow, cflow, 10/*16*/, 15, Scalar(0, 255, 0)); // every 16 pixels flow is displayed. 
 		/*	getFlowGrad(flow, cflow2, 0.85);*/
-			showFlowSobel4gradients(flow);
+
+			calc_motion_boundaries(flow);
             imshow("flow", cflow);
+
 		//	imshow("flow2", cflow2);
 
 			if (App_Parameters.flags.export_frames_to_Mat) {
@@ -584,7 +627,7 @@ int do_DOF(int, char**, bool vid_from_file)
 			}
         }
 
-        if(waitKey(1.0)>=0)
+        if(waitKey(100)>=0) //1
             break;
         std::swap(prevgray, gray);
     }

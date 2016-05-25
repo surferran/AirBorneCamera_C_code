@@ -6,8 +6,8 @@
 
 /////TODO: check to disable auto-ident
 
-//#define TUTUR_AND_TRIALS_MODE		
-//#define REPLACE_MAIN_WITH_EXTERNAL  	//related to the above DEFINE
+// #define TUTUR_AND_TRIALS_MODE		
+// #define REPLACE_MAIN_WITH_EXTERNAL  	//related to the above DEFINE
 
 #include "opencv2/opencv.hpp"
 
@@ -23,14 +23,22 @@ using namespace std;
 //#include <ctime>				// ref by : http://stackoverflow.com/questions/2808398/easily-measure-elapsed-time 
 #include "fback.cpp"
 
+
+
 #ifdef TUTUR_AND_TRIALS_MODE
-//#include "another\SLIC.cpp"
 
 // ref by: http://docs.opencv.org/2.4/doc/tutorials/core/how_to_scan_images/how_to_scan_images.html
 // input line can be : C:\OpenCV\sources\samples\data\aero1.jpg 20
-#include "c:\OpenCV\sources\samples\cpp\tutorial_code\core\how_to_scan_images\how_to_scan_images.cpp"
+#include "C:\Users\Ran_the_User\Documents\GitHub\AirBorneCamera_C_code\our_C_code\src\Slic_from_contrib/slic.hpp"
+#include "another_slic\SLIC.cpp"
+///#include "c:\OpenCV\sources\samples\cpp\tutorial_code\core\how_to_scan_images\how_to_scan_images.cpp"
+
+///#include "C:\opencv3_1\opencv_contrib-master\modules\ximgproc\src/precomp.hpp"
+//#include "C:\opencv3_1\opencv-master\samples\cpp\tutorial_code\f
 
 #endif
+
+#include "Selected_SLIC\SLIC_MyMex.hpp"
 
 #ifndef REPLACE_MAIN_WITH_EXTERNAL
 int main(int argc, char** argv)
@@ -38,10 +46,13 @@ int main(int argc, char** argv)
 	//TODO: add print of app parameters to console, or log.
 
 #ifdef TUTUR_AND_TRIALS_MODE
-	//run_test_slic();
-//	do_slic(argc,argv);
+	//	
 	return 0;
 #endif
+
+	//run_test_slic();
+	//
+	do_slic(argc,argv);
 
 	do_DOF(1,argv, App_Parameters.flags.read_from_file);
 	cvWaitKey(0);
