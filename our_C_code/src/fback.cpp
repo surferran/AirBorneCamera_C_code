@@ -529,12 +529,39 @@ void calc_motion_boundaries(const Mat &flow){
 }
 
 
+int slic_for_frame(IplImage *image  ) 
+{
+	int nr_superpixels	= 400;
+	int nc				= 40;
+
+	/* convert BGR to Lab colour space. */
+	IplImage *lab_image = cvCloneImage(image);
+	cvCvtColor(image, lab_image, CV_BGR2Lab);
+
+	/* Yield the number of superpixels and weight-factors from the user. */
+	int		w		= image->width, 
+			h		= image->height;
+	double	step	= sqrt((w * h) / (double) nr_superpixels) ;
+
+	/* Perform the SLIC superpixel algorithm. */
+	Slic slic;
+	slic.generate_superpixels(lab_image, step, nc);
+	///slic.create_connectivity(lab_image); // not clear what is the final usage of this function 'new_clusters' outcome !
+
+	 // this one is nice only for debug mode..
+	slic.display_contours(image, CV_RGB(255,0,0));	// final output of this: puts the resultant binary map 'istaken' on the 'image'
+	cvShowImage("slic segmentation", image);
+
+	return 0;
+}
+
+
 // TODO: try add constant grid for image windows.
 // http://code.opencv.org/projects/opencv/wiki/DisplayManyImages
 // http://stackoverflow.com/questions/5089927/show-multiple-2-3-4-images-in-the-same-window-in-opencv
 
 
-int do_DOF(int, char**, bool vid_from_file)
+int do_DOF_plus(int, char**, bool vid_from_file)
 {
 	string	base_out_file_path	= "../work_files/optical_flow_as_Mat/";
 	string	framesCounterStr	= ""	, base_file_name = "" , file_full_name="", file_suffix = ".mat";	//base_file_name outMAt_
@@ -572,6 +599,8 @@ int do_DOF(int, char**, bool vid_from_file)
 	double measure_times[100000]; // for keeping times. // this is a trial item
 	int frame_counter = 0 ;
 
+	IplImage IpImage ;   // for passing to SLIC function
+
     namedWindow("flow", 1);
 	///namedWindow("flow2", 1);
 
@@ -599,8 +628,10 @@ int do_DOF(int, char**, bool vid_from_file)
 				t								= 1000*((double)getTickCount() - t)/getTickFrequency();
 				measure_times[frame_counter]	= t;
 			}
-
-			//do_SLIC();
+			 
+			///// conversion by http://answers.opencv.org/question/14088/converting-from-iplimage-to-cvmat-and-vise-versa/ 
+			IpImage =  frame;
+			slic_for_frame(&IpImage) ;
 			//do_frame_slic(frame);
 
 			/* manipulate the frame for user display. into 'cflow' matrix */

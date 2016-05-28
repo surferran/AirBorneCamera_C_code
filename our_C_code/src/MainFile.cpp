@@ -22,6 +22,7 @@ using namespace std;
 //					alarm (in yellow) about suspected pixels as not related to source video.
 
 //#include <ctime>				// ref by : http://stackoverflow.com/questions/2808398/easily-measure-elapsed-time 
+#include "slic.h"
 #include "fback.cpp" 
 ///
 
@@ -37,10 +38,6 @@ using namespace std;
 //
 #include "C:/Users/Ran_the_User/Documents/GitHub/AirBorneCamera_C_code/our_C_code/src/SLIC_opencv_implemented/test_slic.hpp"
 //
-void do_frame_slic(Mat frame_to_segment)
-{ 
-}
-
  
 
 #ifndef REPLACE_MAIN_WITH_EXTERNAL
@@ -55,9 +52,10 @@ int main(int argc, char** argv)
 
 	/// 
 
-	run_test_slic(); 
+	//
+	run_test_slic(); // for debug only. testing functionallity through intermidiate util.
 
-	do_DOF(1,argv, App_Parameters.flags.read_from_file);
+	do_DOF_plus(1,argv, App_Parameters.flags.read_from_file);
 	cvWaitKey(0);
 
 

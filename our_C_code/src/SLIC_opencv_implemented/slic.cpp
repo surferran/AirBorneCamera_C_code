@@ -138,7 +138,8 @@ void Slic::generate_superpixels(IplImage *image, int step, int nc) {
     
     /* Clear previous data (if any), and re-initialize it. */
     clear_data();
-    init_data(image);
+    init_data(image);		// set the grid of superpixels centers as gross divition of the image.
+							// not sure about the details
     
     /* Run EM for 10 iterations (as prescribed by the algorithm). */
     for (int i = 0; i < NR_ITERATIONS; i++) {
