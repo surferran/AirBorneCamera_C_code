@@ -8,6 +8,7 @@ example input video is in 'our_C_code\work_files' .
 so far the implamantation is :
  Dense Optical Flow.
  time measurments
+ SLIC for SuperPixel image oversegmentation
  
 details are present in 'planned and actual alg schem.docx' in main dir.
 
