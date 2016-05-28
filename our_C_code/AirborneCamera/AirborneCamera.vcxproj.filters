@@ -22,6 +22,9 @@
     <ClCompile Include="..\src\writeMat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\SLIC_opencv_implemented\slic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\app_globals.h">
