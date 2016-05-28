@@ -9,6 +9,7 @@
 // #define TUTUR_AND_TRIALS_MODE		
 // #define REPLACE_MAIN_WITH_EXTERNAL  	//related to the above DEFINE
 
+///#include ".\trimmed_slic_to_implement\SLICSuperpixels\SLIC.h"
 #include "opencv2/opencv.hpp"
 
 using namespace cv;
@@ -21,24 +22,26 @@ using namespace std;
 //					alarm (in yellow) about suspected pixels as not related to source video.
 
 //#include <ctime>				// ref by : http://stackoverflow.com/questions/2808398/easily-measure-elapsed-time 
-#include "fback.cpp"
-
-
+#include "fback.cpp" 
+///
 
 #ifdef TUTUR_AND_TRIALS_MODE
+//ref https://msdn.microsoft.com/en-us/library/47w1hdab.aspx  // for using .lib project
 
 // ref by: http://docs.opencv.org/2.4/doc/tutorials/core/how_to_scan_images/how_to_scan_images.html
-// input line can be : C:\OpenCV\sources\samples\data\aero1.jpg 20
-#include "C:\Users\Ran_the_User\Documents\GitHub\AirBorneCamera_C_code\our_C_code\src\Slic_from_contrib/slic.hpp"
-#include "another_slic\SLIC.cpp"
-///#include "c:\OpenCV\sources\samples\cpp\tutorial_code\core\how_to_scan_images\how_to_scan_images.cpp"
-
-///#include "C:\opencv3_1\opencv_contrib-master\modules\ximgproc\src/precomp.hpp"
-//#include "C:\opencv3_1\opencv-master\samples\cpp\tutorial_code\f
+// input line can be : C:\OpenCV\sources\samples\data\aero1.jpg 20 
+///#include "c:\OpenCV\sources\samples\cpp\tutorial_code\core\how_to_scan_images\how_to_scan_images.cpp" 
 
 #endif
 
-#include "Selected_SLIC\SLIC_MyMex.hpp"
+//
+#include "C:/Users/Ran_the_User/Documents/GitHub/AirBorneCamera_C_code/our_C_code/src/SLIC_opencv_implemented/test_slic.hpp"
+//
+void do_frame_slic(Mat frame_to_segment)
+{ 
+}
+
+ 
 
 #ifndef REPLACE_MAIN_WITH_EXTERNAL
 int main(int argc, char** argv)
@@ -50,9 +53,9 @@ int main(int argc, char** argv)
 	return 0;
 #endif
 
-	//run_test_slic();
-	//
-	do_slic(argc,argv);
+	/// 
+
+	run_test_slic(); 
 
 	do_DOF(1,argv, App_Parameters.flags.read_from_file);
 	cvWaitKey(0);

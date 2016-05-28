@@ -601,6 +601,7 @@ int do_DOF(int, char**, bool vid_from_file)
 			}
 
 			//do_SLIC();
+			//do_frame_slic(frame);
 
 			/* manipulate the frame for user display. into 'cflow' matrix */
             cvtColor(prevgray, cflow, COLOR_GRAY2BGR);	// previous step video frame -> 'cflow'
@@ -610,7 +611,8 @@ int do_DOF(int, char**, bool vid_from_file)
             drawOptFlowMap(flow, cflow, 10/*16*/, 15, Scalar(0, 255, 0)); // every 16 pixels flow is displayed. 
 		/*	getFlowGrad(flow, cflow2, 0.85);*/
 
-			calc_motion_boundaries(flow);
+			calc_motion_boundaries(flow);////////////////////////////
+
             imshow("flow", cflow);
 
 		//	imshow("flow2", cflow2);
