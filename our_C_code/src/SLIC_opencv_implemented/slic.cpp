@@ -204,6 +204,7 @@ void Slic::generate_superpixels(IplImage *image, int step, int nc) {
             centers[j][4] /= center_counts[j];
         }
     }
+	num_of_superPixels = centers.size();
 }
 
 /*

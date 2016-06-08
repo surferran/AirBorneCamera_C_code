@@ -59,6 +59,8 @@ class Slic {
         void clear_data();
         void init_data(IplImage *image);
 
+		long num_of_superPixels;
+
     public:
         /* Class constructors and deconstructors. */
         Slic();
@@ -73,6 +75,8 @@ class Slic {
         void display_center_grid(IplImage *image, CvScalar colour);
         void display_contours(IplImage *image, CvScalar colour);
         void colour_with_cluster_means(IplImage *image);
+
+		long return_num_of_superpixels() { return num_of_superPixels;}; 
 };
 
 #endif

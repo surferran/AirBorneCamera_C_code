@@ -1,5 +1,5 @@
 /* file: app_globals.h */
-#ifndef _APP_GLOBALS_H_
+#ifndef _APP_GLOBALS_H_ 
 #define _APP_GLOBALS_H_
 
 #include "opencv2/opencv.hpp"
@@ -9,9 +9,8 @@ using namespace std;
 
 struct Alg_parameters {
 	double	lambda_m				= 0.7; // assing note-reff number..
-
-
 };
+
 struct App_flags {
 	bool	read_from_file			= true;   // true-read video file. false - for live capture from camera(0)
 	bool	convert_RGB_2_Gray		= true;	// need for preparing rgb(or BRG) frames to optical flow calculation

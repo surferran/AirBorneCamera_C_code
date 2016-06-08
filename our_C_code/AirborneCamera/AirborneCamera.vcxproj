@@ -135,19 +135,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\fback.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="..\src\composed_algorithm.cpp" />
     <ClCompile Include="..\src\MainFile.cpp" />
-    <ClCompile Include="..\src\SLIC_opencv_implemented\slic.cpp" />
-    <ClCompile Include="..\src\writeMat.cpp">
+    <ClCompile Include="..\src\ourConverted\calcSpatialConnections.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\src\SLIC_opencv_implemented\slic.cpp" />
+    <ClCompile Include="..\src\some_utils\writeMat.cpp" />
+    <ClCompile Include="..\src\some_utils\writeMat.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\app_globals.h" />
+    <ClInclude Include="..\src\composed_algorithm.hpp" />
+    <ClInclude Include="..\src\SLIC_opencv_implemented\slic.h" />
+    <ClInclude Include="..\src\some_utils\test_slic.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

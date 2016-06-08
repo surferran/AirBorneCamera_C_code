@@ -1,24 +1,15 @@
-//#include "opencv2/video/tracking.hpp"
-//#include "opencv2/imgproc/imgproc.hpp"
-//#include "opencv2/videoio/videoio.hpp"
-//#include "opencv2/highgui/highgui.hpp"
-//TODO: change this file name from 'fback' to 'DOF'
-
-#include <iostream>
-
-using namespace cv;
-using namespace std;
-
-#include "app_globals.h"
-
-#include "writeMat.cpp"
+#include "composed_algorithm.hpp"
 
 static void help_fback()
 {
     cout <<
-            "\nThis section implements ---dense optical flow--- algorithm by Gunnar Farneback\n"
+		"\ncontents: \n implementation of ---dense optical flow--- algorithm by Gunnar Farneback\n" <<
+		"\n and SuperPixels by SLIC method, customed for OpenCV framework\n" <<
+		"\n + video segmantation algorithem according to selected article algorithm\n "
              << endl;
 }
+
+// add some vectors accodring to scale factor , to the original image //
 static void drawOptFlowMap(const Mat& flow, Mat& cflowmap, int step,
                     double vecFactor, const Scalar& color)
 {
@@ -37,6 +28,7 @@ static void drawOptFlowMap(const Mat& flow, Mat& cflowmap, int step,
 		}
 }
 
+// algorithm functions. section 3.1 in the article //
 Mat& calc_bpm(Mat& I)  //I is magnitude //float32
 {
 	float	der_mag ,	b_m_p,		lambda_m = 0.7; // can be about 0.7 to 1.5, or else..
@@ -64,6 +56,7 @@ Mat& calc_bpm(Mat& I)  //I is magnitude //float32
 	return I;
 }
 
+// algorithm functions. section 3.1 in the article //
 bool calc_bpTheta( Mat& I ,Mat& out_bpTheta )  //I is angle //float32
 {
 	float 	ang_diff,		ang_nom,			delta_ang_max,		temp,
@@ -136,7 +129,7 @@ bool calc_bpTheta( Mat& I ,Mat& out_bpTheta )  //I is angle //float32
 	return true;
 }
 
-
+// algorithm functions. section 3.1 in the article //
 Mat& calc_bp_total(Mat& bpm, Mat& bpTheta)  //I is magnitude //float32
 {
 	float	T_threshold_top	= 0.023;//0.025;  //0.08
@@ -172,6 +165,8 @@ Mat& calc_bp_total(Mat& bpm, Mat& bpTheta)  //I is magnitude //float32
 	return bpm;
 }
 
+// algorithm functions. section 3.1 in the article //
+// calculates votes for horizontal and vertical directions //
 Mat& calc_votes_1(Mat& bp, Mat& out1 )
 {								  // accept only char type matrices
 	CV_Assert(bp.depth() != sizeof(float));
@@ -210,7 +205,8 @@ Mat& calc_votes_1(Mat& bp, Mat& out1 )
 	return out1;
 }
 
-
+// algorithm functions. section 3.1 in the article //
+// calculates votes for diagonal right and left directions //
 Mat& calc_votes_2(Mat& bp, Mat& out3)  // out_i is Si
 {								  // accept only char type matrices?
 	CV_Assert(bp.depth() != sizeof(float));
@@ -296,6 +292,7 @@ Mat& calc_votes_2(Mat& bp, Mat& out3)  // out_i is Si
 	return out3;
 }
 
+// algorithm functions. section 3.1 in the article //
 // result is inside outside maps
 Mat& calc_total_8_votes(Mat& out1, Mat& out2, Mat& out3, Mat& out4, Mat& totalVotes)  // out_i is Si. all matrices should be in same sizes (assumed. not verified)
 {								 
@@ -384,8 +381,7 @@ Mat& calc_total_8_votes(Mat& out1, Mat& out2, Mat& out3, Mat& out4, Mat& totalVo
 	return totalVotes;
 }
 
-
-
+// algorithm functions. section 3.1 in the article //
 void calc_motion_boundaries(const Mat &flow){
 	//extraxt x and y channels
 	cv::Mat xy[2]; //X,Y
@@ -529,7 +525,9 @@ void calc_motion_boundaries(const Mat &flow){
 }
 
 
-int slic_for_frame(IplImage *image  ) 
+// preperation for the algorithm input. //
+// calls the segmentation function of SLIC //
+void slic_for_frame(IplImage *image  , Slic &slic)   
 {
 	int nr_superpixels	= 400;
 	int nc				= 40;
@@ -543,25 +541,38 @@ int slic_for_frame(IplImage *image  )
 			h		= image->height;
 	double	step	= sqrt((w * h) / (double) nr_superpixels) ;
 
+
 	/* Perform the SLIC superpixel algorithm. */
-	Slic slic;
 	slic.generate_superpixels(lab_image, step, nc);
-	///slic.create_connectivity(lab_image); // not clear what is the final usage of this function 'new_clusters' outcome !
 
 	 // this one is nice only for debug mode..
 	slic.display_contours(image, CV_RGB(255,0,0));	// final output of this: puts the resultant binary map 'istaken' on the 'image'
 	cvShowImage("slic segmentation", image);
 
-	return 0;
 }
 
+
+// algorithm functions. section 3.2 in the article //
+// calcualte spatial and temporal functions //
+void calc_pairwisePotentials()
+{
+	//similar to the original code and article algorithm.
+	// calculate V,W  matrices.
+	/*
+	get list of  [ sSource, sDestination ] as result of getSpatialConnections by inputs of ( superpixels, labels )
+	get list of  [ tSource, tDestination] and [ tConnections ] as result of getTemporalConnections by ( flow, superpixels, labels );
+	calculate superpixels factors by colour distance(in spacial, and temporal), and geometrical centers distances
+	finish calculations according to the article equations 8,9 */
+	/*getSpatialConnections using the superpixel segmentation */
+
+
+}
 
 // TODO: try add constant grid for image windows.
 // http://code.opencv.org/projects/opencv/wiki/DisplayManyImages
 // http://stackoverflow.com/questions/5089927/show-multiple-2-3-4-images-in-the-same-window-in-opencv
 
-
-int do_DOF_plus(int, char**, bool vid_from_file)
+int process_video_segmentation_algorithm(int, char**, bool vid_from_file)
 {
 	string	base_out_file_path	= "../work_files/optical_flow_as_Mat/";
 	string	framesCounterStr	= ""	, base_file_name = "" , file_full_name="", file_suffix = ".mat";	//base_file_name outMAt_
@@ -598,8 +609,10 @@ int do_DOF_plus(int, char**, bool vid_from_file)
 	double t ; //for timings
 	double measure_times[100000]; // for keeping times. // this is a trial item
 	int frame_counter = 0 ;
-
+	long /*long*/ superPixels_accumulated =0; // accumulated through frames.
+	vector<long> sPixels_bounds;
 	IplImage IpImage ;   // for passing to SLIC function
+	Slic SlicOutput;
 
     namedWindow("flow", 1);
 	///namedWindow("flow2", 1);
@@ -629,10 +642,11 @@ int do_DOF_plus(int, char**, bool vid_from_file)
 				measure_times[frame_counter]	= t;
 			}
 			 
+			/* do the SLIC algo. on this frame */
 			///// conversion by http://answers.opencv.org/question/14088/converting-from-iplimage-to-cvmat-and-vise-versa/ 
 			IpImage =  frame;
-			slic_for_frame(&IpImage) ;
-			//do_frame_slic(frame);
+			slic_for_frame(&IpImage, SlicOutput) ;
+
 
 			/* manipulate the frame for user display. into 'cflow' matrix */
             cvtColor(prevgray, cflow, COLOR_GRAY2BGR);	// previous step video frame -> 'cflow'
@@ -642,11 +656,19 @@ int do_DOF_plus(int, char**, bool vid_from_file)
             drawOptFlowMap(flow, cflow, 10/*16*/, 15, Scalar(0, 255, 0)); // every 16 pixels flow is displayed. 
 		/*	getFlowGrad(flow, cflow2, 0.85);*/
 
+			/* calculate votes for this frame. by optical flow input */
 			calc_motion_boundaries(flow);////////////////////////////
 
             imshow("flow", cflow);
 
-		//	imshow("flow2", cflow2);
+			/* do the super-pixels handling */
+			superPixels_accumulated += SlicOutput.return_num_of_superpixels();
+			sPixels_bounds.push_back(superPixels_accumulated) ; // if x labels then labels[0..x-1]. next is [x..y-1],.. (y=x1+x2+..)
+																//    for frame [0,1,..]
+			/* run pairwise potenrials */
+			// use the current and previous frames. and flow result for those. and other inputs.
+			calc_pairwisePotentials(); 
+
 
 			if (App_Parameters.flags.export_frames_to_Mat) {
 				//  TODO: 
@@ -656,7 +678,7 @@ int do_DOF_plus(int, char**, bool vid_from_file)
 				file_full_name = base_out_file_path + base_file_name + std::to_string(++stream_frame_index) + file_suffix;
 
 				const char * c = file_full_name.c_str();
-				writeMat(flow, c, "DOFframe", true, 0); //get returned byte . send number of images to be saved
+				//writeMat(flow, c, "DOFframe", true, 0); //get returned byte . send number of images to be saved
 			}
         }
 
