@@ -21,10 +21,10 @@ Slic::~Slic() {
  * Output: -
  */
 void Slic::clear_data() {
-    clusters.clear();
-    distances.clear();
-    centers.clear();
-    center_counts.clear();
+    clusters		.clear();
+    distances		.clear();
+    centers			.clear();
+    center_counts	.clear();
 }
 
 /*
@@ -43,8 +43,9 @@ void Slic::init_data(IplImage *image) {
             cr.push_back(-1);
             dr.push_back(FLT_MAX);
         }
-        clusters.push_back(cr);
-        distances.push_back(dr);
+        clusters			.push_back(cr);
+		clusters_with_offset.push_back(cr);	//added by RAN
+        distances			.push_back(dr);
     }
     
     /* Initialize the centers and counters. */
@@ -131,7 +132,7 @@ CvPoint Slic::find_local_minimum(IplImage *image, CvPoint center) {
  * Input : The Lab image (IplImage*), the stepsize (int), and the weight (int).
  * Output: -
  */
-void Slic::generate_superpixels(IplImage *image, int step, int nc) {
+void Slic::generate_superpixels(IplImage *image, int step, int nc, long labelOffset) {
     this->step = step;
     this->nc = nc;
     this->ns = step;
@@ -156,14 +157,15 @@ void Slic::generate_superpixels(IplImage *image, int step, int nc) {
                 for (int l = centers[j][4] - step; l < centers[j][4] + step; l++) {
                 
                     if (k >= 0 && k < image->width && l >= 0 && l < image->height) {
-                        CvScalar colour = cvGet2D(image, l, k);
-                        double d = compute_dist(j, cvPoint(k,l), colour);
+                        CvScalar colour = cvGet2D(image, l, k);				// cvGet2D( const CvArr* arr, int y, int x )
+                        double d = compute_dist(j, cvPoint(k,l), colour);	// cvPoint( int x, int y )
                         
                         /* Update cluster allocation if the cluster minimizes the
                            distance. */
                         if (d < distances[k][l]) {
-                            distances[k][l] = d;
-                            clusters[k][l] = j;
+                            distances[k][l]				= d;
+                            clusters[k][l]				= j;
+							clusters_with_offset[k][l]	= j + labelOffset;
                         }
                     }
                 }
@@ -285,8 +287,9 @@ void Slic::create_connectivity(IplImage *image) {
  * Output: -
  */
 void Slic::display_center_grid(IplImage *image, CvScalar colour) {
+	// 0.3 as constant radius
     for (int i = 0; i < (int) centers.size(); i++) {
-        cvCircle(image, cvPoint(centers[i][3], centers[i][4]), 2, colour, 2);
+        cvCircle(image, cvPoint(centers[i][3], centers[i][4]), 0.3, colour, 2);
     }
 }
 

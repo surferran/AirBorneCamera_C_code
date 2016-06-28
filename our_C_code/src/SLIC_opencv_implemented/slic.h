@@ -39,6 +39,7 @@ class Slic {
     private:
         /* The cluster assignments and distance values for each pixel. */
         vec2di clusters;
+		vec2di clusters_with_offset;
         vec2dd distances;
         
         /* The LAB and xy values of the centers. */
@@ -67,16 +68,27 @@ class Slic {
         ~Slic();
         
         /* Generate an over-segmentation for an image. */
-        void generate_superpixels(IplImage *image, int step, int nc);
+        void generate_superpixels		(IplImage *image, int step	, int nc,	long labelOffset);
         /* Enforce connectivity for an image. */
-        void create_connectivity(IplImage *image);
+        void create_connectivity		(IplImage *image);
         
         /* Draw functions. Resp. displayal of the centers and the contours. */
-        void display_center_grid(IplImage *image, CvScalar colour);
-        void display_contours(IplImage *image, CvScalar colour);
-        void colour_with_cluster_means(IplImage *image);
+        void display_center_grid		(IplImage *image, CvScalar colour);
+        void display_contours			(IplImage *image, CvScalar colour);
+        void colour_with_cluster_means	(IplImage *image);
 
-		long return_num_of_superpixels() { return num_of_superPixels;}; 
+		///////////////////  added functions   ///////////////////////////////
+
+		long	return_num_of_superpixels() { return num_of_superPixels ; } ; 
+
+		vec2dd	return_centers()			{ return centers ; } ; 
+
+		size_t	return_clusters_size()		{ return clusters.size() ; } ; 
+		size_t	return_clusters_size2()		{ return clusters[0].size() ; } ;  
+
+		int *	return_pointer_to_clusters_column(int i)  { int* pv = &clusters[i][0]; return pv ; } ;// pointer to vector i start
+		//int *	return_pointer_to_clustersVec(){ clusters.resize( return_clusters_size()*return_clusters_size2() ) ;
+		//										 return return_pointer_to_clusters_column(0);	} ;// pointer to vector i start
 };
 
 #endif

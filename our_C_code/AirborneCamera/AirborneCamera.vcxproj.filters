@@ -19,13 +19,16 @@
     <Filter Include="Source Files\some_utils">
       <UniqueIdentifier>{61201947-7997-4bde-9da3-a40ed7487bdf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\part1">
+      <UniqueIdentifier>{5ca2d026-30d0-413e-823f-d8e8b529aab3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\part1">
+      <UniqueIdentifier>{b932201e-d498-4fd9-a206-69c009cb0401}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\MainFile.cpp" />
     <ClCompile Include="..\src\SLIC_opencv_implemented\slic.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\ourConverted\calcSpatialConnections.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\composed_algorithm.cpp">
@@ -36,6 +39,15 @@
     </ClCompile>
     <ClCompile Include="..\src\some_utils\writeMat.cpp">
       <Filter>Source Files\some_utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ourConverted\calcSpatialConnections.hpp">
+      <Filter>Header Files\part1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ourConverted\calcSpatialConnections.cpp">
+      <Filter>Source Files\part1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ourConverted\calcTemporalConnections.cpp">
+      <Filter>Source Files\part1</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -50,6 +62,9 @@
     </ClInclude>
     <ClInclude Include="..\src\composed_algorithm.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ourConverted\calcTemporalConnections.hpp">
+      <Filter>Header Files\part1</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

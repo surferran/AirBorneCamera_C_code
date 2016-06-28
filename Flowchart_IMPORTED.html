@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<!-- saved from url=(0086)file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/flowchart.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Flowchart*</title>
+<meta name="description" content="Interactive flowchart diagram implemented by GoJS in JavaScript for HTML.">
+<!-- Copyright 1998-2016 by Northwoods Software Corporation. -->
+
+<script async="" src="./Flowchart_IMPORTED_files/analytics.js"></script><script src="./Flowchart_IMPORTED_files/go.js"></script><script src="./Flowchart_IMPORTED_files/go(1).js"></script>
+<link href="./Flowchart_IMPORTED_files/goSamples.css" rel="stylesheet" type="text/css">  <!-- you don't need to use this -->
+<script src="./Flowchart_IMPORTED_files/goSamples.js"></script><script src="./Flowchart_IMPORTED_files/highlight.js"></script><link type="text/css" rel="stylesheet" href="./Flowchart_IMPORTED_files/highlight.css">  <!-- this is only for the GoJS Samples framework -->
+<script id="code">
+  function init() {
+    if (window.goSamples) goSamples();  // init for these samples -- you don't need to call this
+    var $ = go.GraphObject.make;  // for conciseness in defining templates
+
+    myDiagram =
+      $(go.Diagram, "myDiagramDiv",  // must name or refer to the DIV HTML element
+        {
+          initialContentAlignment: go.Spot.Center,
+          allowDrop: true,  // must be true to accept drops from the Palette
+          "LinkDrawn": showLinkLabel,  // this DiagramEvent listener is defined below
+          "LinkRelinked": showLinkLabel,
+          "animationManager.duration": 800, // slightly longer than default (600ms) animation
+          "undoManager.isEnabled": true  // enable undo & redo
+        });
+
+    // when the document is modified, add a "*" to the title and enable the "Save" button
+    myDiagram.addDiagramListener("Modified", function(e) {
+      var button = document.getElementById("SaveButton");
+      if (button) button.disabled = !myDiagram.isModified;
+      var idx = document.title.indexOf("*");
+      if (myDiagram.isModified) {
+        if (idx < 0) document.title += "*";
+      } else {
+        if (idx >= 0) document.title = document.title.substr(0, idx);
+      }
+    });
+
+    // helper definitions for node templates
+
+    function nodeStyle() {
+      return [
+        // The Node.location comes from the "loc" property of the node data,
+        // converted by the Point.parse static method.
+        // If the Node.location is changed, it updates the "loc" property of the node data,
+        // converting back using the Point.stringify static method.
+        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+        {
+          // the Node.location is at the center of each node
+          locationSpot: go.Spot.Center,
+          //isShadowed: true,
+          //shadowColor: "#888",
+          // handle mouse enter/leave events to show/hide the ports
+          mouseEnter: function (e, obj) { showPorts(obj.part, true); },
+          mouseLeave: function (e, obj) { showPorts(obj.part, false); }
+        }
+      ];
+    }
+
+    // Define a function for creating a "port" that is normally transparent.
+    // The "name" is used as the GraphObject.portId, the "spot" is used to control how links connect
+    // and where the port is positioned on the node, and the boolean "output" and "input" arguments
+    // control whether the user can draw links from or to the port.
+    function makePort(name, spot, output, input) {
+      // the port is basically just a small circle that has a white stroke when it is made visible
+      return $(go.Shape, "Circle",
+               {
+                  fill: "transparent",
+                  stroke: null,  // this is changed to "white" in the showPorts function
+                  desiredSize: new go.Size(8, 8),
+                  alignment: spot, alignmentFocus: spot,  // align the port on the main Shape
+                  portId: name,  // declare this object to be a "port"
+                  fromSpot: spot, toSpot: spot,  // declare where links may connect at this port
+                  fromLinkable: output, toLinkable: input,  // declare whether the user may draw links to/from here
+                  cursor: "pointer"  // show a different cursor to indicate potential link point
+               });
+    }
+
+    // define the Node templates for regular nodes
+
+    var lightText = 'whitesmoke';
+
+    myDiagram.nodeTemplateMap.add("",  // the default category
+      $(go.Node, "Spot", nodeStyle(),
+        // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
+        $(go.Panel, "Auto",
+          $(go.Shape, "Rectangle",
+            { fill: "#00A9C9", stroke: null },
+            new go.Binding("figure", "figure")),
+          $(go.TextBlock,
+            {
+              font: "bold 11pt Helvetica, Arial, sans-serif",
+              stroke: lightText,
+              margin: 8,
+              maxSize: new go.Size(160, NaN),
+              wrap: go.TextBlock.WrapFit,
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        ),
+        // four named ports, one on each side:
+        makePort("T", go.Spot.Top, false, true),
+        makePort("L", go.Spot.Left, true, true),
+        makePort("R", go.Spot.Right, true, true),
+        makePort("B", go.Spot.Bottom, true, false)
+      ));
+
+    myDiagram.nodeTemplateMap.add("Start",
+      $(go.Node, "Spot", nodeStyle(),
+        $(go.Panel, "Auto",
+          $(go.Shape, "Circle",
+            { minSize: new go.Size(40, 40), fill: "#79C900", stroke: null }),
+          $(go.TextBlock, "Start",
+            { font: "bold 11pt Helvetica, Arial, sans-serif", stroke: lightText },
+            new go.Binding("text"))
+        ),
+        // three named ports, one on each side except the top, all output only:
+        makePort("L", go.Spot.Left, true, false),
+        makePort("R", go.Spot.Right, true, false),
+        makePort("B", go.Spot.Bottom, true, false)
+      ));
+
+    myDiagram.nodeTemplateMap.add("End",
+      $(go.Node, "Spot", nodeStyle(),
+        $(go.Panel, "Auto",
+          $(go.Shape, "Circle",
+            { minSize: new go.Size(40, 40), fill: "#DC3C00", stroke: null }),
+          $(go.TextBlock, "End",
+            { font: "bold 11pt Helvetica, Arial, sans-serif", stroke: lightText },
+            new go.Binding("text"))
+        ),
+        // three named ports, one on each side except the bottom, all input only:
+        makePort("T", go.Spot.Top, false, true),
+        makePort("L", go.Spot.Left, false, true),
+        makePort("R", go.Spot.Right, false, true)
+      ));
+
+    myDiagram.nodeTemplateMap.add("Comment",
+      $(go.Node, "Auto", nodeStyle(),
+        $(go.Shape, "File",
+          { fill: "#EFFAB4", stroke: null }),
+        $(go.TextBlock,
+          {
+            margin: 5,
+            maxSize: new go.Size(200, NaN),
+            wrap: go.TextBlock.WrapFit,
+            textAlign: "center",
+            editable: true,
+            font: "bold 12pt Helvetica, Arial, sans-serif",
+            stroke: '#454545'
+          },
+          new go.Binding("text").makeTwoWay())
+        // no ports, because no links are allowed to connect with a comment
+      ));
+
+
+    // replace the default Link template in the linkTemplateMap
+    myDiagram.linkTemplate =
+      $(go.Link,  // the whole link panel
+        {
+          routing: go.Link.AvoidsNodes,
+          curve: go.Link.JumpOver,
+          corner: 5, toShortLength: 4,
+          relinkableFrom: true,
+          relinkableTo: true,
+          reshapable: true,
+          resegmentable: true,
+          // mouse-overs subtly highlight links:
+          mouseEnter: function(e, link) { link.findObject("HIGHLIGHT").stroke = "rgba(30,144,255,0.2)"; },
+          mouseLeave: function(e, link) { link.findObject("HIGHLIGHT").stroke = "transparent"; }
+        },
+        new go.Binding("points").makeTwoWay(),
+        $(go.Shape,  // the highlight shape, normally transparent
+          { isPanelMain: true, strokeWidth: 8, stroke: "transparent", name: "HIGHLIGHT" }),
+        $(go.Shape,  // the link path shape
+          { isPanelMain: true, stroke: "gray", strokeWidth: 2 }),
+        $(go.Shape,  // the arrowhead
+          { toArrow: "standard", stroke: null, fill: "gray"}),
+        $(go.Panel, "Auto",  // the link label, normally not visible
+          { visible: false, name: "LABEL", segmentIndex: 2, segmentFraction: 0.5},
+          new go.Binding("visible", "visible").makeTwoWay(),
+          $(go.Shape, "RoundedRectangle",  // the label shape
+            { fill: "#F8F8F8", stroke: null }),
+          $(go.TextBlock, "Yes",  // the label
+            {
+              textAlign: "center",
+              font: "10pt helvetica, arial, sans-serif",
+              stroke: "#333333",
+              editable: true
+            },
+            new go.Binding("text").makeTwoWay())
+        )
+      );
+
+    // Make link labels visible if coming out of a "conditional" node.
+    // This listener is called by the "LinkDrawn" and "LinkRelinked" DiagramEvents.
+    function showLinkLabel(e) {
+      var label = e.subject.findObject("LABEL");
+      if (label !== null) label.visible = (e.subject.fromNode.data.figure === "Diamond");
+    }
+
+    // temporary links used by LinkingTool and RelinkingTool are also orthogonal:
+    myDiagram.toolManager.linkingTool.temporaryLink.routing = go.Link.Orthogonal;
+    myDiagram.toolManager.relinkingTool.temporaryLink.routing = go.Link.Orthogonal;
+
+    load();  // load an initial diagram from some JSON text
+
+    // initialize the Palette that is on the left side of the page
+    myPalette =
+      $(go.Palette, "myPaletteDiv",  // must name or refer to the DIV HTML element
+        {
+          "animationManager.duration": 800, // slightly longer than default (600ms) animation
+          nodeTemplateMap: myDiagram.nodeTemplateMap,  // share the templates used by myDiagram
+          model: new go.GraphLinksModel([  // specify the contents of the Palette
+            { category: "Start", text: "Start" },
+            { text: "Step" },
+            { text: "???", figure: "Diamond" },
+            { category: "End", text: "End" },
+            { category: "Comment", text: "Comment" }
+          ])
+        });
+
+  }
+
+  // Make all ports on a node visible when the mouse is over the node
+  function showPorts(node, show) {
+    var diagram = node.diagram;
+    if (!diagram || diagram.isReadOnly || !diagram.allowLink) return;
+    node.ports.each(function(port) {
+        port.stroke = (show ? "white" : null);
+      });
+  }
+
+
+  // Show the diagram's model in JSON format that the user may edit
+  function save() {
+    document.getElementById("mySavedModel").value = myDiagram.model.toJson();
+    myDiagram.isModified = false;
+  }
+  function load() {
+    myDiagram.model = go.Model.fromJson(document.getElementById("mySavedModel").value);
+  }
+
+  // add an SVG rendering of the diagram at the end of this page
+  function makeSVG() {
+    var svg = myDiagram.makeSvg({
+        scale: 0.5
+      });
+    svg.style.border = "1px solid black";
+    obj = document.getElementById("SVGArea");
+    obj.appendChild(svg);
+    if (obj.children.length > 0) {
+      obj.replaceChild(svg, obj.children[0]);
+    }
+  }
+</script>
+<style></style></head>
+<body onload="init()"><div id="menu">  <ul id="sections">    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/index.html"><h2 class="index"><span class="glyphicon glyphicon-th"></span>Index</h2></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/minimal.html">Minimal<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/minimal.png"></span></a></li>    <!--<li><a href="minimalJSON.html">Minimal (JSON)</a></li>-->    <!--<li><a href="minimalXML.html">Minimal (XML)</a></li>-->    <!--<li><a href="require.html">Using RequireJS</a></li>-->    <!--<li><a href="angular.html">Using AngularJS</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/basic.html">Basic<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/basic.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/classHierarchy.html">Class Hierarchy<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/classHierarchy.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/DOMTree.html">DOM Tree<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/DOMTree.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/visualTree.html">Visual Tree<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/visualTree.png"></span></a></li>    <!--<li><a href="visualTreeGrouping.html">Visual Tree Groups</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/shapes.html">Shapes<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/shapes.png"></span></a></li>    <!--<li><a href="tiger.html">SVG Tiger</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/icons.html">SVG Icons<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/icons.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/arrowheads.html">Arrowheads<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/arrowheads.png"></span></a></li>    <!--<li><a href="relationships.html">Relationships</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/navigation.html">Navigation<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/navigation.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/adornmentButtons.html">Adornment Buttons<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/adornmentButtons.png"></span></a></li>    <!--<li><a href="hoverButtons.html">Hover Buttons</a></li>-->    <hr>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/familyTree.html">Family Tree<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/familyTree.png"></span></a></li>    <!--<li><a href="familyTreeJP.html">Family Tree (Japanese)</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/localView.html">Local View<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/localView.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/decisionTree.html">Decision Tree<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/decisionTree.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/incrementalTree.html">Incremental Tree<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/incrementalTree.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/doubleTree.html">Double Tree<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/doubleTree.png"></span></a></li>    <!--<li><a href="doubleTreeJSON.html">Double Tree (JSON)</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/orgChartStatic.html">OrgChart (Static)<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/orgChartStatic.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/orgChartEditor.html">OrgChart Editor<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/orgChartEditor.png"></span></a></li>    <!--<li><a href="orgChartExtras.html">OrgChart (Extras)</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/mindMap.html">Mind Map<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/mindMap.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/tournament.html">Tournament<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/tournament.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/treeView.html">Tree View<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/treeView.png"></span></a></li>    <!--<li><a href="pipeTree.html">Pipe Tree</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/genogram.html">Genogram<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/genogram.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/IVRtree.html">IVR Tree<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/IVRtree.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/parseTree.html">Parse Tree<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/parseTree.png"></span></a></li>    <!--<li><a href="faultTree.html">Parse Tree</a></li>-->    <hr>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/beatPaths.html">Beat Paths<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/beatPaths.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/conceptMap.html">Concept Map<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/conceptMap.png"></span></a></li>    <!--<li><a href="pathAnimation.html">Path Animation</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/euler.html">Euler Diagram<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/euler.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/dataVisualization.html">Data Visualization<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/dataVisualization.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/entityRelationship.html">Entity Relationship<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/entityRelationship.png"></span></a></li>    <!--<li><a href="doubleCircle.html">Double Circle</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/friendWheel.html">Friend Wheel<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/friendWheel.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/radial.html">Recentering Radial<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/radial.png"></span></a></li>    <!--<li><a href="radialPartition.html">Radial Partition</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/distances.html">Distances and Paths<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/distances.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/sankey.html">Sankey<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/sankey.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/PERT.html">PERT<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/PERT.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/gantt.html">Gantt<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/gantt.png"></span></a></li>    <!--<li><a href="timeline.html">Timeline</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/shopFloorMonitor.html">Shop Floor Monitor<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/shopFloorMonitor.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/kittenMonitor.html">Kitten Monitor<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/kittenMonitor.png"></span></a></li>    <!--<li><a href="constantSize.html">Constant Size</a></li>-->    <!--<li><a href="spacingZoom.html">Spacing Zoom</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/grouping.html">Grouping<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/grouping.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/swimBands.html">Layer Bands<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/swimBands.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/swimLanes.html">Swim Lanes<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/swimLanes.png"></span></a></li>    <!--<li><a href="swimLanesVertical.html">Swim Lanes (V)</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/kanban.html">Kanban Board<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/kanban.png"></span></a></li>    <!--<li><a href="spreadsheet.html">Spreadsheet</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/umlClass.html">UML Class<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/umlClass.png"></span></a></li>    <!--<li><a href="virtualized.html">Virtualized no Layout</a></li>-->    <!--<li><a href="virtualizedTree.html">Virtualized Tree</a></li>-->    <!--<li><a href="virtualizedTreeLayout.html">Virtualized TreeLayout</a></li>-->    <!--<li><a href="virtualizedForceLayout.html">Virtualized ForceLayout</a></li>-->    <hr>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/flowchart.html" class="selected">Flowchart<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/flowchart.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/pageFlow.html">Page Flow<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/pageFlow.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/processFlow.html">Process Flow<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/processFlow.png"></span></a></li>    <!--<li><a href="productionProcess.html">Production Process</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/systemDynamics.html">System Dynamics<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/systemDynamics.png"></span></a></li>    <!--<li><a href="flowBuilder.html">Flow Builder</a></li>-->    <!--<li><a href="flowgrammer.html">Flowgrammer</a></li>-->    <!--<li><a href="network.html">Network Config</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/stateChart.html">State Chart<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/stateChart.png"></span></a></li>    <!--<li><a href="stateChartIncremental.html">State Chart using incremental JSON</a></li>-->    <!--<li><a href="sharedStates.html">Shared States</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/sequentialFunction.html">Sequential Function<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/sequentialFunction.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/grafcet.html">Grafcet Diagrams<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/grafcet.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/sequenceDiagram.html">Sequence Diagram<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/sequenceDiagram.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/logicCircuit.html">Logic Circuit<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/logicCircuit.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/records.html">Record Mapper<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/records.png"></span></a></li>    <!--<li><a href="selectableFields.html">Selectable Fields</a></li>-->    <!--<li><a href="treeMapper.html">Tree Mapper</a></li>-->    <!--<li><a href="addRemoveColumns.html">Add & Remove Columns</a></li>-->    <!--<li><a href="dragDropFields.html">Drag & Drop Fields</a></li>-->    <!--<li><a href="dragOutFields.html">Drag Out Fields</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/dataFlow.html">Data Flow<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/dataFlow.png"></span></a></li>    <!--<li><a href="dataFlowVertical.html">Data Flow (V)</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/dynamicPorts.html">Dynamic Ports<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/dynamicPorts.png"></span></a></li>    <!--<li><a href="selectablePorts.html">Selectable Ports</a></li>-->    <!--<li><a href="draggablePorts.html">Draggable Ports</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/planogram.html">Planogram<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/planogram.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/seatingChart.html">Seating Chart<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/seatingChart.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/regrouping.html">Regrouping<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/regrouping.png"></span></a></li>    <!--<li><a href="regroupingScaled.html">Regrouping Scaled</a></li>-->    <!--<li><a href="regroupingTreeView.html">Regrouping with Tree View</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/pipes.html">Pipes<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/pipes.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/draggableLink.html">Draggable Link<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/draggableLink.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/linksToLinks.html">Links to Links<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/linksToLinks.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/updateDemo.html">Update Demo<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/updateDemo.png"></span></a></li>    <!--<li><a href="twoDiagrams.html">Two Diagrams</a></li>-->    <!--<hr />-->    <!--<li><a href="curviness.html">Curviness</a></li>-->    <!--<li><a href="multiNodePathLinks.html">Path Links</a></li>-->    <!--<li><a href="taperedLinks.html">Tapered Links</a></li>-->    <!--<li><a href="multiArrow.html">Multi Arrow</a></li>-->    <!--<li><a href="barCharts.html">Bar Charts</a></li>-->    <!--<li><a href="pieCharts.html">Pie Charts</a></li>-->    <!--<li><a href="candlestickCharts.html">Candlestick Charts</a></li>-->    <!--<li><a href="sparklineGraphs.html">Sparkline Graphs</a></li>-->    <hr>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/contentAlign.html">Content Alignment<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/contentAlign.png"></span></a></li>    <!--<li><a href="absolute.html">Absolute Positioning</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/htmlInteraction.html">HTML Interaction<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/htmlInteraction.png"></span></a></li>    <!--<li><a href="htmlDragDrop.html">HTML Drag and Drop</a></li>-->    <!--<li><a href="jQueryDragDrop.html">jQuery Drag and Drop</a></li>-->    <!--<li><a href="macros.html">Macros via auto ungrouping</a></li>-->    <!--<li><a href="dragUnoccupied.html">Custom Part.dragComputation function to avoid overlapping nodes when dragging</a>-->    <!--<li><a href="customTextEditingTool.html">Text Editing</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/customContextMenu.html">Context Menu<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/customContextMenu.png"></span></a></li>    <!--<li><a href="htmlLightBoxContextMenu.html">LightBox Context</a></li>-->    <!--<li><a href="tabs.html">Tabbed Diagrams</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/canvases.html">Canvases<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/canvases.png"></span></a></li>    <!--<li><a href="magnifier.html">Magnifier</a></li>-->    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/comments.html">Comments<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/comments.png"></span></a></li>    <hr>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/gLayout.html">Grid Layout<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/gLayout.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/tLayout.html">Tree Layout<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/tLayout.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/fdLayout.html">Force Directed<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/fdLayout.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/ldLayout.html">Layered Digraph<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/ldLayout.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/cLayout.html">Circular Layout<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/cLayout.png"></span></a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/interactiveForce.html">Interactive Force<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/interactiveForce.png"></span></a></li>    <hr>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/extensions/index.html">GoJS Extensions</a></li>    <li><a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/samples/unlisted.html">Unlisted Samples<span class="samplespan"><img height="200" src="./Flowchart_IMPORTED_files/unlisted.png"></span></a></li>  </ul></div>
+<div id="sample">
+  <div style="width:100%; white-space:nowrap;">
+    <span style="display: inline-block; vertical-align: top; padding: 5px; width:100px">
+      <div id="myPaletteDiv" style="border: 1px solid gray; height: 720px; position: relative; -webkit-tap-highlight-color: rgba(255, 255, 255, 0); cursor: auto;"><canvas tabindex="0" width="98" height="720" style="position: absolute; top: 0px; left: 0px; z-index: 2; -webkit-user-select: none; width: 98px; height: 720px; cursor: auto;">This text is displayed if your browser does not support the Canvas HTML element.</canvas><div style="position: absolute; overflow: auto; width: 98px; height: 720px; z-index: 1;"><div style="position: absolute; width: 1px; height: 1px;"></div></div></div>
+    </span>
+
+    <span style="display: inline-block; vertical-align: top; padding: 5px; width:80%">
+      <div id="myDiagramDiv" style="border: 1px solid gray; height: 720px; position: relative; -webkit-tap-highlight-color: rgba(255, 255, 255, 0); cursor: auto;"><canvas tabindex="0" width="952" height="720" style="position: absolute; top: 0px; left: 0px; z-index: 2; -webkit-user-select: none; width: 952px; height: 720px; cursor: auto;">This text is displayed if your browser does not support the Canvas HTML element.</canvas><div style="position: absolute; overflow: auto; width: 952px; height: 720px; z-index: 1;"><div style="position: absolute; width: 1px; height: 1px;"></div></div></div>
+    </span>
+  </div>
+  <p>
+  The FlowChart sample demonstrates several key features of GoJS,
+  namely <a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/intro/palette.html">Palette</a>s,
+  <a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/intro/links.html">Linkable nodes</a>, Drag/Drop behavior,
+  <a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/intro/textBlocks.html">Text Editing</a>, and the use of
+  <a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/intro/templateMaps.html">Node Template Maps</a> in Diagrams.
+  </p>
+  <p>
+  Mouse-over a Node to view its ports.
+  Drag from these ports to create new Links.
+  Selecting Links allows you to re-shape and re-link them.
+  Selecting a Node and then clicking its TextBlock will allow
+  you to edit text (except on the Start and End Nodes).
+  </p>
+  <p>
+  The Diagram Model data is loaded from the JSON below.
+  </p>
+  <button id="SaveButton" onclick="save()">Save</button>
+  <button onclick="load()">Load</button>
+  <textarea id="mySavedModel" style="width:100%;height:300px">{ "class": "go.GraphLinksModel",
+  "linkFromPortIdProperty": "fromPort",
+  "linkToPortIdProperty": "toPort",
+  "nodeDataArray": [
+{"category":"Comment", "loc":"360 -10", "text":"Kookie Brittle", "key":-13},
+{"key":-1, "category":"Start", "loc":"175 0", "text":"Start"},
+{"key":0, "loc":"0 77", "text":"Preheat oven to 375 F"},
+{"key":1, "loc":"175 100", "text":"In a bowl, blend: 1 cup margarine, 1.5 teaspoon vanilla, 1 teaspoon salt"},
+{"key":2, "loc":"175 190", "text":"Gradually beat in 1 cup sugar and 2 cups sifted flour"},
+{"key":3, "loc":"175 270", "text":"Mix in 6 oz (1 cup) Nestle's Semi-Sweet Chocolate Morsels"},
+{"key":4, "loc":"175 370", "text":"Press evenly into ungreased 15x10x1 pan"},
+{"key":5, "loc":"352 85", "text":"Finely chop 1/2 cup of your choice of nuts"},
+{"key":6, "loc":"175 440", "text":"Sprinkle nuts on top"},
+{"key":7, "loc":"175 500", "text":"Bake for 25 minutes and let cool"},
+{"key":8, "loc":"175 570", "text":"Cut into rectangular grid"},
+{"key":-2, "category":"End", "loc":"175 640", "text":"Enjoy!"}
+ ],
+  "linkDataArray": [
+{"from":1, "to":2, "fromPort":"B", "toPort":"T"},
+{"from":2, "to":3, "fromPort":"B", "toPort":"T"},
+{"from":3, "to":4, "fromPort":"B", "toPort":"T"},
+{"from":4, "to":6, "fromPort":"B", "toPort":"T"},
+{"from":6, "to":7, "fromPort":"B", "toPort":"T"},
+{"from":7, "to":8, "fromPort":"B", "toPort":"T"},
+{"from":8, "to":-2, "fromPort":"B", "toPort":"T"},
+{"from":-1, "to":0, "fromPort":"B", "toPort":"T"},
+{"from":-1, "to":1, "fromPort":"B", "toPort":"T"},
+{"from":-1, "to":5, "fromPort":"B", "toPort":"T"},
+{"from":5, "to":4, "fromPort":"B", "toPort":"T"},
+{"from":0, "to":4, "fromPort":"B", "toPort":"T"}
+ ]}
+  </textarea>
+  <p>Click the button below to render the current GoJS Diagram into SVG at one-half scale.
+     The SVG is not interactive like the GoJS diagram, but can be used for printing or display.
+     For more information, see the page on <a href="file:///C:/Users/Ran_the_User/Documents/GitHub/_using/gojs_site/intro/makingSVG.html">making SVG</a>.</p>
+  <button onclick="makeSVG()">Render as SVG</button>
+  <div id="SVGArea"></div>
+<div><p><a href="javascript:goViewSource()">View this sample page's source in-page</a></p><p><a href="https://github.com/NorthwoodsSoftware/GoJS/blob/master/samples/flowchart.html" target="_blank">View this sample page's source on GitHub</a></p></div><div class="footer"><b>GoJS</b>® version 1.6.9 for JavaScript and HTML. Copyright © 1998-2016 by Northwoods Software Corporation.</div></div>
+
+
+<div style="top: 0px; z-index: 300; position: fixed; display: none; text-align: center; left: 25%; width: 50%; padding: 16px; border: 16px solid rgb(68, 68, 68); border-radius: 10px; margin-top: 10px; background-color: rgb(245, 245, 245);"></div><div style="z-index: 299; position: fixed; display: none; top: 0px; left: 0px; width: 100%; height: 100%; opacity: 0.8; background-color: black;"></div></body></html>

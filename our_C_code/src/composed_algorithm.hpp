@@ -9,6 +9,9 @@ using namespace cv;
 using namespace std;
 
 #include "app_globals.h"
+#include "ourConverted\calcSpatialConnections.hpp"
+#include "ourConverted\calcTemporalConnections.hpp"
+
 ///#include "some_utils\writeMat.hpp"   //TODO: check how to include this and operate the function
 //#include <ctime>				// ref by : http://stackoverflow.com/questions/2808398/easily-measure-elapsed-time 
 

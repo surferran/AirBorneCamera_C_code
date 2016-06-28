@@ -33,8 +33,9 @@ static const Main_App_parameters App_Parameters;
 /// storage matrices to keep all alg outputs for each frame. current and previous
 // needs to keep arrays
 struct Storage_4_frames {
-	Mat DOF;
-	Mat SPixels;
+	long	struct_size= 0;    //	the length of the built struct. it is the number of processed frames.
+	Mat		DOF;				//	output of optical flow of current and previous frames.
+	Slic	SPixels;			//	output of superpixels SLIC of current frame.
 };
 
 #endif  //_APP_GLOBALS_H_

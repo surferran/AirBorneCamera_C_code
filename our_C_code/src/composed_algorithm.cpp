@@ -527,10 +527,10 @@ void calc_motion_boundaries(const Mat &flow){
 
 // preperation for the algorithm input. //
 // calls the segmentation function of SLIC //
-void slic_for_frame(IplImage *image  , Slic &slic)   
+void slic_for_frame(IplImage *image  , Slic &slic, long startingOffset)   
 {
-	int nr_superpixels	= 400;
-	int nc				= 40;
+	int nr_superpixels	= 200;//1500;	// current values are what used in the article// 400;
+	int nc				= 30;	// current values are what used in the article // 40;
 
 	/* convert BGR to Lab colour space. */
 	IplImage *lab_image = cvCloneImage(image);
@@ -543,18 +543,70 @@ void slic_for_frame(IplImage *image  , Slic &slic)
 
 
 	/* Perform the SLIC superpixel algorithm. */
-	slic.generate_superpixels(lab_image, step, nc);
+	slic.generate_superpixels(lab_image, step, nc,  startingOffset); // 3 1st variables are the original version
 
 	 // this one is nice only for debug mode..
-	slic.display_contours(image, CV_RGB(255,0,0));	// final output of this: puts the resultant binary map 'istaken' on the 'image'
+	slic.display_contours	(image, CV_RGB(255,0,0));	// final output of this: puts the resultant binary map 'istaken' on the 'image'
+	slic.display_center_grid(image, CV_RGB(0,250,0));	// final output of this: puts the resultant binary map 'istaken' on the 'image'
 	cvShowImage("slic segmentation", image);
 
 }
 
+void copy_vectors_to_array(int w, int h,  Slic *slic_obj, unsigned int * out_array)
+{
+	// consider http://stackoverflow.com/questions/13237490/how-to-use-a-2d-vector-of-pointers
+
+	int* tmp = NULL;// slic_obj->return_pointer_to_clusters_column();
+
+	for (int j=0; j<w; j++)
+	{	
+		tmp = slic_obj->return_pointer_to_clusters_column(j);  /*vec2dd in_vec*/		
+		for(int i=0; i<h; i++)
+		{
+			out_array[j*h + i] = tmp[i];  // 			point = j * height + i;
+		}
+	}
+}
+
+void copy_floatMat_to_shortArray(int w, int h,  Mat & flow , short * out_array)
+{
+	float* tmp = NULL;
+	float* tmpX = NULL;
+	float* tmpY = NULL;
+
+	unsigned int elements = h* w;
+/*
+	const Point2f& fxy = flow.at<Point2f>(y, x);
+	Mag2 = vecFactor*fxy.x*fxy.x*vecFactor + vecFactor*fxy.y*fxy.y*vecFactor ;       */
+
+	cv::Mat xy[2]; //X,Y
+	cv::split(flow, xy);
+
+	///cv::cartToPolar(xy[0], xy[1], magnitude, angle, false);
+
+
+	for (int i=0; i<h; i++)
+	{	
+		tmp =  flow.ptr<float>(i);
+		tmpX = xy[0].ptr<float>(i);
+		tmpY = xy[1].ptr<float>(i);
+		for(int j=0; j<w; j++)
+		{
+
+			const Point2f& fxy = flow.at<Point2f>(i, j);
+			//out_array[i+ j*h] = (short)tmp[j];  // this should be fine for a Mat.
+												/// all lines are flatten in sequence
+			out_array[i+ j*h]				= (short)tmpX[j];  // this should be fine for a Mat.
+			out_array[i+ j*h + elements]	= (short)tmpY[j];  // this should be fine for a Mat.
+		}
+	}
+
+	
+}
 
 // algorithm functions. section 3.2 in the article //
 // calcualte spatial and temporal functions //
-void calc_pairwisePotentials()
+void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &flow, long long superPixels_accumulated)
 {
 	//similar to the original code and article algorithm.
 	// calculate V,W  matrices.
@@ -564,13 +616,140 @@ void calc_pairwisePotentials()
 	calculate superpixels factors by colour distance(in spacial, and temporal), and geometrical centers distances
 	finish calculations according to the article equations 8,9 */
 	/*getSpatialConnections using the superpixel segmentation */
+	
 
+	//convert segmented_slic.clusters to required input format
+	size_t	W				= segmented_slic->return_clusters_size();		// assumed same for current and previous frames
+	size_t	H				= segmented_slic->return_clusters_size2();		// -"-
+	long	num_of_sPixels	= segmented_slic->return_num_of_superpixels() ;
+	unsigned int w = W;
+	unsigned int h = H;
+	///unsigned int eNum = num_of_sPixels;
+
+		// ref: convert vector to array pointer by : http://stackoverflow.com/questions/1733143/converting-between-c-stdvector-and-c-array-without-copying
+		//		or : http://stackoverflow.com/questions/6946217/pointer-to-a-vector
+		//		& consider this: http://www.cprogramming.com/tutorial/stl/iterators.html
+		//		& c this at end : http://stackoverflow.com/questions/6734472/how-to-get-a-pointer-to-a-2d-stdvectors-contents
+
+	int				vec_size						= W*H;
+	short			* converted_Mat_flow			= new short		   [vec_size*2]; // for 2 channels of the OpticalFlow data
+	unsigned int	* converted_vector2d_slic		= new unsigned int [vec_size];
+	unsigned int	* converted_vector2d_prevSlic	= new unsigned int [vec_size];
+	unsigned int	*spatial_sources				= new unsigned int [vec_size];
+	unsigned int	*spatial_targets				= new unsigned int [vec_size];
+	unsigned int	*temporal_sources				= new unsigned int [vec_size];
+	unsigned int	*temporal_targets				= new unsigned int [vec_size];
+	float			*connectionRatio				= new float		   [vec_size];
+
+	/////////
+
+	copy_vectors_to_array(W,H,segmented_slic,converted_vector2d_slic); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
+
+	calcSpatialConnections(converted_vector2d_slic , H, W, num_of_sPixels, spatial_sources, spatial_targets);
+
+	/////////
+
+	copy_vectors_to_array(W,H,prev_segmented_slic,converted_vector2d_prevSlic); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
+	copy_floatMat_to_shortArray(W,H,flow,converted_Mat_flow); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
+
+	if ( !(flow.isContinuous() ) )
+	{
+		// http://docs.opencv.org/3.1.0/d3/d63/classcv_1_1Mat.html#aff83775c7fc1479de5f4a8c4e67fe361 
+		cout << " indeces design ERROR - no continues stoarge... (in 'calc_votes_2') "; //because of matrix/pointer indexing
+		return ;  
+	}
+
+	calcTemporalConnections(converted_Mat_flow, converted_vector2d_slic, H, W, converted_vector2d_prevSlic , superPixels_accumulated,
+									temporal_sources, temporal_targets, connectionRatio );
+		 
+	/* calculate the weight factors */
+	
+	//float spatial_centers_dis = sqrt(pow(sum(centers_source_s - centers_targets_s),2)); //TODO:check validity of ^2/2
+	//float spatial_colour_dis  = sqrt(pow(sum(colours_source_s - colours_targets_s),2)); //TODO:check validity of ^2/2
+	//float temporal_colour_dis = sqrt(pow(sum(colours_source_t - colours_targets_t),2)); //TODO:check validity of ^2/2
+
+	//double beta = ...  // according article, and 'computePairwisePotentials' function in main script.
+	// wights..
+	// set output as params.spatialWeight * sWeights ,	params.temporalWeight * tWeights 
+
+
+	if ( converted_Mat_flow	)			delete converted_Mat_flow;
+	if (converted_vector2d_slic) 		delete converted_vector2d_slic; 
+	if (converted_vector2d_prevSlic) 	delete converted_vector2d_prevSlic; 
+	if (spatial_sources)				delete spatial_sources; 
+	if (spatial_targets)				delete spatial_targets; 
+	if (temporal_sources)				delete temporal_sources; 
+	if (temporal_targets)				delete temporal_targets; 
+	if (connectionRatio)				delete connectionRatio;
+
+}
+
+// algorithm functions. section 3.2 in the article //
+// calcualte spatial and temporal functions //
+void calc_unary_potentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &flow, long long superPixels_accumulated)
+{
+	
+	//convert segmented_slic.clusters to required input format
+	size_t	W				= segmented_slic->return_clusters_size();		// assumed same for current and previous frames
+	size_t	H				= segmented_slic->return_clusters_size2();		// -"-
+	long	num_of_sPixels	= segmented_slic->return_num_of_superpixels() ;
+	unsigned int w = W;
+	unsigned int h = H;
+
+
+	int				vec_size						= W*H;
+	short			* converted_Mat_flow			= new short		   [vec_size];
+	unsigned int	* converted_vector2d_slic		= new unsigned int [vec_size];
+	unsigned int	* converted_vector2d_prevSlic	= new unsigned int [vec_size];
+	unsigned int	*spatial_sources				= new unsigned int [vec_size];
+	unsigned int	*spatial_targets				= new unsigned int [vec_size];
+	unsigned int	*temporal_sources				= new unsigned int [vec_size];
+	unsigned int	*temporal_targets				= new unsigned int [vec_size];
+	float			*connectionRatio				= new float		   [vec_size];
+
+	/*
+		accumulateInOutMap
+		pre-settings 4 locationUnaries - global
+		pre-settings 4 locationUnaries - per frame
+		build fadeout matrix 
+			weights( i ) = exp( - params.fadeout * ( i - middle ) ^ 2 );
+		
+		prepare segmenting by
+
+			fgNodeWeights = masks( foregroundMasks ) .* ...
+			weights( ids( foregroundMasks ) );
+			bgNodeWeights = ( 1 - masks( backgroundMasks ) ) .* ...
+			weights( ids( backgroundMasks ) );
+		
+		findUniqueColourWeights
+
+		fitGMM..
+
+		getUnaryAppearance : by 'pdf' functions
+		unaryPotentials as Log ..
+
+		maxflow_mex_optimisedWrapper
+
+
+
+
+	 */
+	if ( converted_Mat_flow	)			delete converted_Mat_flow;
+	if (converted_vector2d_slic) 		delete converted_vector2d_slic; 
+	if (converted_vector2d_prevSlic) 	delete converted_vector2d_prevSlic; 
+	if (spatial_sources)				delete spatial_sources; 
+	if (spatial_targets)				delete spatial_targets; 
+	if (temporal_sources)				delete temporal_sources; 
+	if (temporal_targets)				delete temporal_targets; 
+	if (connectionRatio)				delete connectionRatio;
 
 }
 
 // TODO: try add constant grid for image windows.
 // http://code.opencv.org/projects/opencv/wiki/DisplayManyImages
 // http://stackoverflow.com/questions/5089927/show-multiple-2-3-4-images-in-the-same-window-in-opencv
+
+
 
 int process_video_segmentation_algorithm(int, char**, bool vid_from_file)
 {
@@ -580,17 +759,22 @@ int process_video_segmentation_algorithm(int, char**, bool vid_from_file)
 	//Size	newSize(225, 300);			//(_Tp _width, _Tp _height);
 	//Size	newSize(300, 225);			//(_Tp _width, _Tp _height);
 	//Size	newSize(400, 300);			//(_Tp _width, _Tp _height);
-	//Size	newSize(400, 225);			//(_Tp _width, _Tp _height);
-	//size	newSize(320, 240);			//(_Tp _width, _Tp _height);
-	Size	newSize(320, 240);			//(_Tp _width, _Tp _height);
+	//Size	newSize(400, 225);			//(_Tp _width, _Tp _height);///
+	//Size	newSize(320, 240);			//(_Tp _width, _Tp _height);
+	Size	newSize(160, 120);			//(_Tp _width, _Tp _height);
 	
 	VideoCapture cap;
+vid_from_file = true; 
+bool READNG_FROM_WEB = false ;
 	if (!vid_from_file)
-	    cap = VideoCapture(0);
+		if (READNG_FROM_WEB)
+			cap.open("http://192.168.1.102:8080/");
+		else
+		  cap = VideoCapture(0);
 	else
 	{		
-			char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\2_movement1_several_cars.00.avi";
-		//  char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\MOVI0024.avi";
+		char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\2_movement1_several_cars.00.avi";
+		//	  char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\MOVI0024.avi";
 		//char			rec_file_name[150] = "../work_files/cars.avi";
 		//char			rec_file_name[150] = "../work_files/car1.MP4";
 		//char			rec_file_name[150] = "../work_files/4.mov";
@@ -604,15 +788,23 @@ int process_video_segmentation_algorithm(int, char**, bool vid_from_file)
     if( !cap.isOpened() )
         return -1;
 
-    Mat flow, cflow, frame, cflow2;
-    UMat gray, prevgray, uflow;
-	double t ; //for timings
-	double measure_times[100000]; // for keeping times. // this is a trial item
-	int frame_counter = 0 ;
-	long /*long*/ superPixels_accumulated =0; // accumulated through frames.
-	vector<long> sPixels_bounds;
-	IplImage IpImage ;   // for passing to SLIC function
-	Slic SlicOutput;
+	Mat		frame, prevframe;
+    UMat	gray,  prevgray, uflow;
+    Mat		flow,  cflow,    cflow2;
+	double	t ; //for timings
+	double	measure_times[100000]; // for keeping times. // this is a trial item
+
+	////Storage_4_frames frames_Storage; 
+
+	int					frame_counter = 0 ;
+	long long			superPixels_accumulated =0; // accumulated through frames.
+	long				current_frame_sPixelsNum = 0;
+	long				startingOffset	=0;
+	vector<long>		sPixels_bounds;
+	vector< vec2dd >	frames_sPixels_centers;
+
+	IplImage	IpImage ;   // for passing to SLIC function
+	Slic		SlicOutput , prevSlicOutput;
 
     namedWindow("flow", 1);
 	///namedWindow("flow2", 1);
@@ -622,15 +814,31 @@ int process_video_segmentation_algorithm(int, char**, bool vid_from_file)
         cap >> frame;
 		if (frame.empty())
 			break;
-		// TODO: add test for empty frame. break if empty
+
 		frame_counter++;
 	///	
-		resize(frame, frame, newSize , 0, 0, INTER_CUBIC); 
+		/* current frame processes */
+		resize   (frame, frame, newSize , 0, 0, INTER_CUBIC); 
+        cvtColor (frame, gray, COLOR_BGR2GRAY);
 
-        cvtColor(frame, gray, COLOR_BGR2GRAY);
+		//////////////////////////*  SLIC *///////////////////////////
+		/* do the SLIC algo. on this frame */
+		///// MAT conversion by ref http://answers.opencv.org/question/14088/converting-from-iplimage-to-cvmat-and-vise-versa/ 
+		IpImage			=  frame;
+		startingOffset	=	superPixels_accumulated;
+		slic_for_frame(&IpImage, SlicOutput, startingOffset) ;
+		
+		/* --- do the super-pixels handling - actions inteended for alg. part 3.1 --- */
+		/* to get makeSuperpixelIndexUnique , and getSuperpixelStats*/ // lines 103..107 in 'm' script
+		current_frame_sPixelsNum	 = SlicOutput.return_num_of_superpixels();
+		superPixels_accumulated		+= current_frame_sPixelsNum;
+		sPixels_bounds			.push_back(superPixels_accumulated) ;	// if x labels then labels[0..x-1]. next is [x..y-1],.. (y=x1+x2+..)
+																		//    for frame [0,1,..]
+		frames_sPixels_centers	.push_back( SlicOutput.return_centers() );
 
         if( !prevgray.empty() )
         { 
+			//////////////////////////*  optical flow *///////////////////////////
 			if (App_Parameters.flags.measure_actions_timing)
 				t = (double)getTickCount();
 
@@ -642,34 +850,29 @@ int process_video_segmentation_algorithm(int, char**, bool vid_from_file)
 				measure_times[frame_counter]	= t;
 			}
 			 
-			/* do the SLIC algo. on this frame */
-			///// conversion by http://answers.opencv.org/question/14088/converting-from-iplimage-to-cvmat-and-vise-versa/ 
-			IpImage =  frame;
-			slic_for_frame(&IpImage, SlicOutput) ;
-
-
 			/* manipulate the frame for user display. into 'cflow' matrix */
             cvtColor(prevgray, cflow, COLOR_GRAY2BGR);	// previous step video frame -> 'cflow'
 			// TODO: add frame counter on top of image to display. in corner
-            uflow.copyTo(flow);
+            uflow.copyTo(flow);			// copy UMAT to MAT
 			cflow.copyTo(cflow2);
             drawOptFlowMap(flow, cflow, 10/*16*/, 15, Scalar(0, 255, 0)); // every 16 pixels flow is displayed. 
-		/*	getFlowGrad(flow, cflow2, 0.85);*/
+            imshow("flow", cflow);
+	
 
+			//////////////////////////*  algorithm section 3.1 *///////////////////////////
+			
 			/* calculate votes for this frame. by optical flow input */
 			calc_motion_boundaries(flow);////////////////////////////
 
-            imshow("flow", cflow);
+			 //////////////////////////*  algorithm section 3.2 *///////////////////////////
 
-			/* do the super-pixels handling */
-			superPixels_accumulated += SlicOutput.return_num_of_superpixels();
-			sPixels_bounds.push_back(superPixels_accumulated) ; // if x labels then labels[0..x-1]. next is [x..y-1],.. (y=x1+x2+..)
-																//    for frame [0,1,..]
 			/* run pairwise potenrials */
 			// use the current and previous frames. and flow result for those. and other inputs.
-			calc_pairwisePotentials(); 
+			calc_pairwisePotentials( &SlicOutput ,&prevSlicOutput, flow, superPixels_accumulated); 
 
+		////	calc_unary_potentials();
 
+			/* optional section according to user parameter input */
 			if (App_Parameters.flags.export_frames_to_Mat) {
 				//  TODO: 
 				//  add saving the mat to im file
@@ -680,11 +883,15 @@ int process_video_segmentation_algorithm(int, char**, bool vid_from_file)
 				const char * c = file_full_name.c_str();
 				//writeMat(flow, c, "DOFframe", true, 0); //get returned byte . send number of images to be saved
 			}
+			
         }
 
         if(waitKey(100)>=0) //1
             break;
-        std::swap(prevgray, gray);
+		/// can do just copy. not swap
+        std::swap(prevgray , gray);
+		std::swap(prevframe, frame);
+		prevSlicOutput = SlicOutput;
     }
 	
 	//sum(measure_times);

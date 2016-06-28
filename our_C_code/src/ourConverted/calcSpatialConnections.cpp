@@ -1,20 +1,17 @@
-//#include <matrix.h>/
-#include <iostream>
-#include <set>
 
-void SpetialConnections(unsigned int *superpixelMap, unsigned int height, unsigned int width, 
-							  unsigned long long superpixels[], unsigned int *sorces, unsigned int *targets)
-							  
-/* 	Gets: superpixels map data 
-		 hight and the width of the map data
-		 superpixels labels
-	Returns: sorces map
-			 targets map*/
+#include "calcSpatialConnections.hpp"
+
+void calcSpatialConnections(unsigned int	   *superpixelMap,	// the superpixels segmantation matrix
+							unsigned int		height,			// the H of the frame
+							unsigned int		width,				// the W of the frame
+							unsigned long long	superpixels, // total number of s.pixels
+								unsigned int *sources,				// output of sPixels sources
+								unsigned int *targets)				// output of sPixels targets as the sources neighbours				
 {
 	unsigned int		point, pointNext, superpixel, superpixelNext, count;
     unsigned long long	connection;
 
-	std::set<unsigned long long> connections;
+	std::set<unsigned long long> connections;	
 
 	for( unsigned int i = 0; i < height; i++ )
 	{
