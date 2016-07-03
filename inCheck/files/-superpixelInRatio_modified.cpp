@@ -13,28 +13,20 @@
 				to the number of 
 */
 
-#include <matrix.h>
-
-float * superpixelInRatio(unsigned short *superpixels, int height, int width, bool *inOutMap)
+void superpixelInRatio(unsigned short *superpixels, int height, int width,unsigned short *labels, bool *inOutMap,
+						float * output)
 {
 	
-	float *output[width][height];
-	unsigned int *spixelSize[width][height];
+	///float *output[width][height];
+	int labels_size = *labels;
+	unsigned int spixelSize[labels_size];	//TODO: make sure to zero this
 	
+
+	memset(spixelSize, 0, sizeof(spixelSize) );
 	/** Get the number of superpixels */	
 	/** If number of superpixels is not given, find the largest label */
 	/** We can get the labels value from outside --------- Yair */
-	labels = 0;
-	int point;
-	for( int i = 0; i < height; i++ )
-	{
-		for( int j = 0; j < width; j++ )
-		{
-			point = j * height + i;
-			if( superpixels[ point ] > labels )
-				labels = superpixels[ point ];
-		}
-	}
+
 	
 	/** Compute the superpixel metric matrix */
 	int point;
@@ -45,10 +37,10 @@ float * superpixelInRatio(unsigned short *superpixels, int height, int width, bo
 			point = j * height + i;
 			if( inOutMap[ point ] )
 			{
-				/** Note: superpixel labels are 1 to N */
-				output[ superpixels[ point ] - 1 ]++;
+				/** Note: superpixel labels are 0 to N-1 */
+				output[ superpixels[ point ]  ]++;
 			}
-			spixelSize[ superpixels[ point ] - 1 ]++;
+			spixelSize[ superpixels[ point ] ]++;
 		}
 	}
 
@@ -57,7 +49,5 @@ float * superpixelInRatio(unsigned short *superpixels, int height, int width, bo
 		if( spixelSize[ label ] > 0 )
 			output[ label ] = output[ label ] / float( spixelSize[ label ] );
 	}
-	
-	return output;
 
 }

@@ -25,6 +25,12 @@
     <Filter Include="Source Files\part1">
       <UniqueIdentifier>{b932201e-d498-4fd9-a206-69c009cb0401}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\part2">
+      <UniqueIdentifier>{bf2fbcfa-3ed6-4126-a233-3357bf9284d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\part2">
+      <UniqueIdentifier>{29cde20c-90af-4c16-8ad0-eebcc3c88708}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\MainFile.cpp" />
@@ -49,6 +55,9 @@
     <ClCompile Include="..\src\ourConverted\calcTemporalConnections.cpp">
       <Filter>Source Files\part1</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ourConverted\calcSuperpixelInRatio.cpp">
+      <Filter>Source Files\part2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\app_globals.h">
@@ -65,6 +74,9 @@
     </ClInclude>
     <ClInclude Include="..\src\ourConverted\calcTemporalConnections.hpp">
       <Filter>Header Files\part1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ourConverted\calcSuperpixelInRatio.hpp">
+      <Filter>Header Files\part2</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

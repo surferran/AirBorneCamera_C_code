@@ -14,7 +14,8 @@ void calcTemporalConnections( 	short		 *flow,
 								unsigned long long superpixels,
 									unsigned int *sources,
 									unsigned int *targets,
-									float		 *connectionRatio  );
+									float		 *connectionRatio ,	
+									unsigned int *vectors_length);
 #endif
 
 

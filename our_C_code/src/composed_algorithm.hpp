@@ -11,6 +11,7 @@ using namespace std;
 #include "app_globals.h"
 #include "ourConverted\calcSpatialConnections.hpp"
 #include "ourConverted\calcTemporalConnections.hpp"
+#include "ourConverted\calcSuperpixelInRatio.hpp"
 
 ///#include "some_utils\writeMat.hpp"   //TODO: check how to include this and operate the function
 //#include <ctime>				// ref by : http://stackoverflow.com/questions/2808398/easily-measure-elapsed-time 
@@ -54,8 +55,8 @@ void slic_for_frame(IplImage *image  , Slic &slic)   ;
 
 // algorithm functions. section 3.2 in the article //
 // calcualte spatial and temporal functions //
-void calc_pairwisePotentials();
-
+///void calc_pairwisePotentials();
+void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &flow, long long superPixels_accumulated);
 
 int process_video_segmentation_algorithm(int, char**, bool vid_from_file);
 

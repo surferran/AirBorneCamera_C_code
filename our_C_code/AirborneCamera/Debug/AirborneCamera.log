@@ -1,5 +1,25 @@
-﻿Build started 29/06/2016 01:21:56.
+﻿Build started 2/07/2016 01:18:29.
+     1>Project "C:\Users\Ran_the_User\Documents\GitHub\AirBorneCamera_C_code\our_C_code\AirborneCamera\AirborneCamera.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt ..\src\composed_algorithm.cpp
+         composed_algorithm.cpp
+     1>c:\users\ran_the_user\documents\github\airbornecamera_c_code\our_c_code\src\composed_algorithm.cpp(65): warning C4018: '<': signed/unsigned mismatch
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Ran_the_User\Documents\GitHub\AirBorneCamera_C_code\our_C_code\Debug\AirborneCam.exe" /INCREMENTAL:NO /NOLOGO opencv_calib3d300d.lib opencv_core300d.lib opencv_features2d300d.lib opencv_flann300d.lib opencv_hal300d.lib opencv_highgui300d.lib opencv_imgcodecs300d.lib opencv_imgproc300d.lib opencv_ml300d.lib opencv_objdetect300d.lib opencv_photo300d.lib opencv_shape300d.lib opencv_stitching300d.lib opencv_superres300d.lib opencv_ts300d.lib opencv_video300d.lib opencv_videoio300d.lib opencv_videostab300d.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"C:\Users\Ran_the_User\Documents\GitHub\AirBorneCamera_C_code\our_C_code\Debug\AirborneCam.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Ran_the_User\Documents\GitHub\AirBorneCamera_C_code\our_C_code\Debug\AirborneCam.lib" /MACHINE:X86 Debug\composed_algorithm.obj
+         Debug\MainFile.obj
+         Debug\calcSpatialConnections.obj
+         Debug\calcSuperpixelInRatio.obj
+         Debug\calcTemporalConnections.obj
+         Debug\slic.obj
+         Debug\writeMat.obj
+         Debug\writeMat.obj
+         Debug\calcSpatialConnections.obj
+     1>composed_algorithm.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:LBR' specification
+     1>Debug\writeMat.obj : warning LNK4042: object specified more than once; extras ignored
+     1>Debug\calcSpatialConnections.obj : warning LNK4042: object specified more than once; extras ignored
+         AirborneCamera.vcxproj -> C:\Users\Ran_the_User\Documents\GitHub\AirBorneCamera_C_code\our_C_code\Debug\AirborneCam.exe
+     1>Done Building Project "C:\Users\Ran_the_User\Documents\GitHub\AirBorneCamera_C_code\our_C_code\AirborneCamera\AirborneCamera.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:00.08
+Time Elapsed 00:00:02.73

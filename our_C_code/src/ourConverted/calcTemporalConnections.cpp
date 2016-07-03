@@ -9,7 +9,8 @@ void calcTemporalConnections( 	short		 *flow,
 								unsigned long long superpixels,
 									unsigned int *sources,
 									unsigned int *targets,
-									float		 *connectionRatio  )
+									float		 *connectionRatio,
+									unsigned int *vectors_length)
 {
 	
 	unsigned int frames, /*height, width, */point, pointNext, superpixel, superpixelNext, elements, count, xNext, yNext;
@@ -41,8 +42,8 @@ void calcTemporalConnections( 	short		 *flow,
 
 				pointNext = yNext * height + xNext;
 
-				superpixel		= superpixelMap[ point ] - 1;
-				superpixelNext	= superpixelMapNext[ pointNext ] - 1;
+				superpixel		= superpixelMap[ point ] /*- 1*/;
+				superpixelNext	= superpixelMapNext[ pointNext ]/* - 1*/;
 
 				connection = superpixel + superpixels * superpixelNext;
 				connections[ connection ]++;
@@ -65,5 +66,6 @@ void calcTemporalConnections( 	short		 *flow,
 		count++;
 	}
 	
+	*vectors_length = count ; 
 }
 

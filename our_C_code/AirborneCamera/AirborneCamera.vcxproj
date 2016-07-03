@@ -141,6 +141,7 @@
     <ClCompile Include="..\src\ourConverted\calcSpatialConnections.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\src\ourConverted\calcSuperpixelInRatio.cpp" />
     <ClCompile Include="..\src\ourConverted\calcTemporalConnections.cpp" />
     <ClCompile Include="..\src\SLIC_opencv_implemented\slic.cpp" />
     <ClCompile Include="..\src\some_utils\writeMat.cpp" />
@@ -149,6 +150,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\app_globals.h" />
     <ClInclude Include="..\src\composed_algorithm.hpp" />
+    <ClInclude Include="..\src\ourConverted\calcSuperpixelInRatio.hpp" />
     <ClInclude Include="..\src\ourConverted\calcTemporalConnections.hpp" />
     <ClInclude Include="..\src\SLIC_opencv_implemented\slic.h" />
     <ClInclude Include="..\src\some_utils\test_slic.hpp" />

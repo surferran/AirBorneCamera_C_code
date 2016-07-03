@@ -8,5 +8,6 @@ void calcSpatialConnections(unsigned int *superpixelMap,	// the superpixels segm
 							unsigned int width,				// the W of the frame
 							unsigned long long superpixels, // total number of s.pixels
 								unsigned int *sources,				// output of sPixels sources
-								unsigned int *targets);				// output of sPixels targets as the sources neighbours	
+								unsigned int *targets,				// output of sPixels targets as the sources neighbours	
+								unsigned int *vectors_length);
 #endif
