@@ -59,7 +59,7 @@ int main(int argc, char** argv)
 	if( !cap.isOpened() )
 		return -1;
 
-	Mat		frame, prevframe;
+	Mat		frame, prevframe , dummy_MatFrame;
 	UMat	gray,  prevgray, uflow;
 	Mat		flow,  cflow,    cflow2;
 	Mat		frame_votes;
@@ -96,7 +96,8 @@ int main(int argc, char** argv)
 		//////////////////////////*  SLIC *///////////////////////////
 		/* do the SLIC algo. on this frame */
 		///// MAT conversion by ref http://answers.opencv.org/question/14088/converting-from-iplimage-to-cvmat-and-vise-versa/ 
-		IpImage			=  frame;
+		dummy_MatFrame	=  frame.clone();
+		IpImage			=  dummy_MatFrame;			//	sets a pointer to the Mat. clone() directly doesn't work well.
 		startingOffset	=	superPixels_accumulated;
 		slic_for_frame(&IpImage, SlicOutput, startingOffset) ;
 
@@ -137,13 +138,21 @@ int main(int argc, char** argv)
 			// returns motion boundaries as 'frame_votes'
 			calc_motion_boundaries(flow, frame_votes);////////////////////////////
 
-														//////////////////////////*  algorithm section 3.2 *///////////////////////////
+			//////////////////////////*  algorithm section 3.2 *///////////////////////////
 
-														///			float			*inRatios						= new float		   [num_of_sPixels];
-														//calc_inRatios();
-														/* run pairwise potenrials */
-														// use the current and previous frames. and flow result for those. and other inputs.
-			calc_pairwisePotentials( &SlicOutput ,&prevSlicOutput, flow, superPixels_accumulated); 
+			///			float			*inRatios						= new float		   [num_of_sPixels];
+			//calc_inRatios();
+			/* run pairwise potenrials */
+			// use the current and previous frames. and flow result for those. and other inputs.
+
+			// calculate the pairWise potentials wights for the 2 sub-sequent frames.
+			// return the relevant part for the major E() function.
+			double pairWise_Weight	=	0;
+			calc_pairwisePotentials( &SlicOutput ,&prevSlicOutput, flow, superPixels_accumulated, &pairWise_Weight); 
+			// TODO: in order to use those for more than 2 frames at a time - one must keep all X frames in a global struct
+			//			and pass them to that main function. 
+			//			need also to prepare-back the inside-used functions for dealing with sevevral frames.
+			//			mainly for the temporal option.
 
 			// 			calc_unary_potentials(frame_votes, );
 

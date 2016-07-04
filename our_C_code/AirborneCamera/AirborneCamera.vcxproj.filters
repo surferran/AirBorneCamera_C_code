@@ -58,6 +58,9 @@
     <ClCompile Include="..\src\ourConverted\calcSuperpixelInRatio.cpp">
       <Filter>Source Files\part2</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\functions_file1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\app_globals.h">

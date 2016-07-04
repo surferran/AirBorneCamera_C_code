@@ -56,7 +56,8 @@ void slic_for_frame(IplImage *image  , Slic &slic)   ;
 // algorithm functions. section 3.2 in the article //
 // calcualte spatial and temporal functions //
 ///void calc_pairwisePotentials();
-void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &flow, long long superPixels_accumulated);
+void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &flow, long long superPixels_accumulated,
+								double *pairWise_Weight);
 
 int process_video_segmentation_algorithm(int, char**, bool vid_from_file);
 

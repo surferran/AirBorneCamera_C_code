@@ -136,6 +136,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\composed_algorithm.cpp" />
+    <ClCompile Include="..\src\functions_file1.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\MainFile.cpp" />
     <ClCompile Include="..\src\ourConverted\calcSpatialConnections.cpp" />
     <ClCompile Include="..\src\ourConverted\calcSpatialConnections.hpp">

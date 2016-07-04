@@ -53,49 +53,110 @@ void copy_floatMat_to_shortArray(int w, int h,  Mat & flow , short * out_array)
 	
 }
 
-void function_to_calc_weight_part_1(unsigned int	*sources, unsigned int	*targets, unsigned int vectors_length , vec2dd centeres ,
-										vector<double> color_dist, vector<double> center_dist )
-{
-	//vector<double> spatial_color_dist;
-	//vector<double> spatial_center_dist;
-	//vector<double> temporal_color_dist;
-	double sum=0;
-	double betaSpatial = 0;
+/* calculate the color and centers-geometric distances of the SuperPixels,
+	according to the Spatial connections input of sources and targets.
+	the centers list contains both LAB data and XY data for each sPixel(label).
+*/
+void calc_Spatial_distances_and_Weights(unsigned int	*sources, unsigned int	*targets, 
+										unsigned int vectors_length , vec2dd centers , double *alpha2,
+										double *color_dist, double *center_dist , double *Vij , double *sum_Out)
+{ 
+	double			sum				= 0;
+	double			betaSpatial		= 0; 
+
+	if (vectors_length<1) 
+		return;				// TODO: may add error notice
 
 	for (int i=0; i< vectors_length; i++)
 	{
 		int source_label = sources[i];
 		int target_label = targets[i];
-		double dist1 = 0,
-				dist2, dist3,
-			dist_colors,
-			dist_centers; 
-		dist1 = ( centeres[source_label][0] - centeres[target_label][0] );
-		dist1 = dist1 * dist1;
-		dist2 = ( centeres[source_label][1] - centeres[target_label][1] );
-		dist2 = dist2 * dist2;
-		dist3 = ( centeres[source_label][2] - centeres[target_label][2] );
-		dist3 = dist3 * dist3;
-		dist_colors = dist1 + dist2 + dist3;
+		double	dist1 , dist2 , dist3 ;
 
-		/* dis(Si,Sj) for different(unique) i,j labels */
-		dist1 = ( centeres[source_label][3] - centeres[target_label][3] );
+		/* col(Si,Sj) for different(unique) i,j labels */
+		dist1 = ( centers[source_label][0] - centers[target_label][0] );
 		dist1 = dist1 * dist1;
-		dist2 = ( centeres[source_label][4] - centeres[target_label][4] );
+		dist2 = ( centers[source_label][1] - centers[target_label][1] );
+		dist2 = dist2 * dist2;
+		dist3 = ( centers[source_label][2] - centers[target_label][2] );
+		dist3 = dist3 * dist3;
+		color_dist[i] = dist1 + dist2 + dist3;
+		 
+		/* dis(Si,Sj) for different(unique) i,j labels */
+		dist1 = ( centers[source_label][3] - centers[target_label][3] );
+		dist1 = dist1 * dist1;
+		dist2 = ( centers[source_label][4] - centers[target_label][4] );
 		dist2 = dist2 * dist2;
 	
-		dist_centers = sqrt(dist1 + dist2);		
+		center_dist[i] = sqrt(dist1 + dist2);		
 
 		/* sum of V(i,j) elements*/
-		sum += dist_colors / dist_centers ;
+		sum += color_dist[i] / center_dist[i] ;
 	}
-	betaSpatial = 0.5 / (sum/vectors_length) ; // 0.5 / mean
 
+	double mean = (sum/vectors_length) ;
+	betaSpatial = 0.5 / mean ; 
+
+	/*Vij_list */
+	*sum_Out	=	0 ;
+	for (int i=0; i< vectors_length; i++)
+	{
+		Vij[i]		=	exp( -betaSpatial * color_dist[i] ) / center_dist[i] ;
+		*sum_Out   +=	(*alpha2) * Vij[i];
+	}
+
+}
+
+
+/* calculate the color distances of the SuperPixels,
+according to the Temporal connections input of sources and targets. connectionRatios are given as PHI function.
+the centers list contains both LAB data and XY data for each sPixel(label).
+*/
+void calc_Temporal_distances_and_Weights(	unsigned int	*sources, unsigned int	*targets, float	*connectionRatios, 
+											unsigned int vectors_length , vec2dd centers , double *alpha3,
+											double* color_dist , double *Wij, double *sum_Out)
+{ 
+	double sum			= 0;
+	double betaTemporal	= 0;
+
+	if (vectors_length<1) 
+		return;				// TODO: may add error notice
+
+	for (int i=0; i< vectors_length; i++)
+	{
+		int		source_label = sources[i];
+		int		target_label = targets[i]; 
+		double	dist1 , dist2 , dist3;
+
+		/* col(Si,Sj) for different(unique) i,j labels */
+		dist1 = ( centers[source_label][0] - centers[target_label][0] );
+		dist1 = dist1 * dist1;
+		dist2 = ( centers[source_label][1] - centers[target_label][1] );
+		dist2 = dist2 * dist2;
+		dist3 = ( centers[source_label][2] - centers[target_label][2] );
+		dist3 = dist3 * dist3;
+		color_dist[i] = dist1 + dist2 + dist3;	
+
+		/* sum of W(i,j) elements*/
+		sum += color_dist[i] * connectionRatios[i];
+	}
+
+	double mean = (sum/vectors_length) ;
+	betaTemporal = 0.5 / mean ; 
+
+	/*Wij_list */
+	*sum_Out	=	0;
+	for (int i=0; i< vectors_length; i++)
+	{
+		Wij[i]		=	exp( -betaTemporal * color_dist[i] ) * connectionRatios[i] ;
+		*sum_Out   +=	(*alpha3) * Wij[i];
+	}
 }
 
 // algorithm functions. section 3.2 in the article //
 // calcualte spatial and temporal functions //
-void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &flow, long long superPixels_accumulated)
+void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &flow, long long superPixels_accumulated,
+								double *pairWise_Weight)
 {
 	//similar to the original code and article algorithm.
 	// calculate V,W  matrices.
@@ -124,17 +185,15 @@ void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat
 	short			* converted_Mat_flow			= new short		   [vec_size*2]; // for 2 channels of the OpticalFlow data
 	unsigned int	* converted_vector2d_slic		= new unsigned int [vec_size];
 	unsigned int	* converted_vector2d_prevSlic	= new unsigned int [vec_size];
-	unsigned int	*spatial_sources				= new unsigned int [vec_size];
-	unsigned int	*spatial_targets				= new unsigned int [vec_size];
-	unsigned int	*temporal_sources				= new unsigned int [vec_size];
-	unsigned int	*temporal_targets				= new unsigned int [vec_size];
-	float			*connectionRatio				= new float		   [vec_size];
+	unsigned int	*spatial_sources				= new unsigned int [vec_size];	// preparing maximum possible size
+	unsigned int	*spatial_targets				= new unsigned int [vec_size];	//
+	unsigned int	*temporal_sources				= new unsigned int [vec_size];	//
+	unsigned int	*temporal_targets				= new unsigned int [vec_size];	//
+	float			*connectionRatio				= new float		   [vec_size];	//
 	unsigned int	spatial_vectors_len				= 0;
 	unsigned int	temporal_vectors_len			= 0;
 
-	vector<double> spatial_color_dist;
-	vector<double> spatial_center_dist;
-	vector<double> temporal_color_dist , dummy;
+	
 	/////////
 
 	copy_vectors_to_array(W,H,segmented_slic,converted_vector2d_slic); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
@@ -159,22 +218,30 @@ void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat
 		 
 	/* calculate the weight factors */
 
-	function_to_calc_weight_part_1(spatial_sources, spatial_targets, spatial_vectors_len, prev_segmented_slic->return_centers() 
-									,spatial_color_dist, spatial_center_dist   ); 
+	double	*spatial_color_dist		=	new double [spatial_vectors_len] ,
+			*spatial_center_dist	=	new double [spatial_vectors_len] ,
+			*temporal_color_dist	=	new double [temporal_vectors_len] ,
+			*Vij					=	new double [spatial_vectors_len] ,/*sWeights*/
+			*Wij					=	new double [temporal_vectors_len] ;/*tWeights*/
 
-	function_to_calc_weight_part_1(temporal_sources, temporal_targets, temporal_vectors_len, segmented_slic->return_centers() 
-									,temporal_color_dist, dummy   ); 
-	
-	//double tmp = sum (centeres[source_label][0] - centeres[target_label][0] );
+	double	alpha2	=	1,		// TODO: must put those outside. get them as user parameters.
+			alpha3	=	1;
 
-	//float spatial_centers_dis = sqrt(pow(sum(centers_source_s - centers_targets_s),2)); //TODO:check validity of ^2/2
-	//float spatial_colour_dis  = sqrt(pow(sum(colours_source_s - colours_targets_s),2)); //TODO:check validity of ^2/2
-	//float temporal_colour_dis = sqrt(pow(sum(colours_source_t - colours_targets_t),2)); //TODO:check validity of ^2/2
+	double	Spatial_part	=0,
+			Temporal_part	=0;
 
-	//double beta = ...  // according article, and 'computePairwisePotentials' function in main script.
-	// wights..
-	// set output as params.spatialWeight * sWeights ,	params.temporalWeight * tWeights 
+	calc_Spatial_distances_and_Weights(	spatial_sources , spatial_targets , spatial_vectors_len , 
+										prev_segmented_slic->return_centers() ,	&alpha2 ,
+										spatial_color_dist , spatial_center_dist , Vij, &Spatial_part  ); 
 
+	calc_Temporal_distances_and_Weights(temporal_sources , temporal_targets , connectionRatio ,
+										temporal_vectors_len , segmented_slic->return_centers() , &alpha3 ,
+										temporal_color_dist , Wij , &Temporal_part ); 
+	 
+	 
+	// later on the outcome of this part will be 
+	//  alpha2 * sum(Vij) + alpha3 * sum(Wij)
+	*pairWise_Weight	=	Spatial_part + Temporal_part ;
 
 	if ( converted_Mat_flow	)			delete converted_Mat_flow;
 	if (converted_vector2d_slic) 		delete converted_vector2d_slic; 
@@ -184,6 +251,12 @@ void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat
 	if (temporal_sources)				delete temporal_sources; 
 	if (temporal_targets)				delete temporal_targets; 
 	if (connectionRatio)				delete connectionRatio;
+
+	if (spatial_color_dist)				delete spatial_color_dist;
+	if (spatial_center_dist)			delete spatial_center_dist;
+	if (temporal_color_dist)			delete temporal_color_dist;
+	if (Vij)							delete Vij;
+	if (Wij)							delete Wij;
 
 }
 ////////////////////////////////////////////////////////////////////////////////////////
