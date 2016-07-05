@@ -18,10 +18,7 @@
 void calcSuperpixelInRatio(unsigned int *superpixels, int height, int width,const unsigned short *labels, bool *inOutMap,
 						float * output)
 {
-	
-	///float *output[width][height];
-	const int labels_size = *labels;
-	//unsigned int spixelSize[labels_size];	//TODO: make sure to zero this
+	const int labels_size = *labels; 
 
 	unsigned int	*spixelSize				= new unsigned int [labels_size];
 

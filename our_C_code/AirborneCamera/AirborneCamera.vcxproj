@@ -137,8 +137,9 @@
   <ItemGroup>
     <ClCompile Include="..\src\composed_algorithm.cpp" />
     <ClCompile Include="..\src\functions_file1.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\MainFile.cpp" />
     <ClCompile Include="..\src\ourConverted\calcSpatialConnections.cpp" />
@@ -154,6 +155,9 @@
   <ItemGroup>
     <ClInclude Include="..\src\app_globals.h" />
     <ClInclude Include="..\src\composed_algorithm.hpp" />
+    <ClInclude Include="..\src\functions_file1.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\src\ourConverted\calcSuperpixelInRatio.hpp" />
     <ClInclude Include="..\src\ourConverted\calcTemporalConnections.hpp" />
     <ClInclude Include="..\src\SLIC_opencv_implemented\slic.h" />

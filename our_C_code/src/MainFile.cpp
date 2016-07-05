@@ -8,8 +8,8 @@
 //   set_Mask()  - ignore, in every aspect, from pixels in this. borders, or constant broadcast texts and signs.
 //					alarm (in yellow) about suspected pixels as not related to source video.
 
+//
 #include "composed_algorithm.hpp"
-#include "functions_file1.cpp"
 
 
 int main(int argc, char** argv)
@@ -31,7 +31,9 @@ int main(int argc, char** argv)
 	//Size	newSize(300, 225);			//(_Tp _width, _Tp _height);
 	//Size	newSize(400, 300);			//(_Tp _width, _Tp _height);
 	//Size	newSize(400, 225);			//(_Tp _width, _Tp _height);///
-	//Size	newSize(320, 240);			//(_Tp _width, _Tp _height);
+
+	//	Size	newSize(320, 240);			//(_Tp _width, _Tp _height);
+	//
 	Size	newSize(160, 120);			//(_Tp _width, _Tp _height);
 
 	VideoCapture cap;
@@ -44,7 +46,7 @@ int main(int argc, char** argv)
 			cap = VideoCapture(0);
 	else
 	{		
-		char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\2_movement1_several_cars.00.avi";
+		//char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\2_movement1_several_cars.00.avi";
 		//	  char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\MOVI0024.avi";
 		//char			rec_file_name[150] = "../work_files/cars.avi";
 		//char			rec_file_name[150] = "../work_files/car1.MP4";
@@ -52,6 +54,10 @@ int main(int argc, char** argv)
 		//char			rec_file_name[150] = "../work_files/car2.mov";
 		//char			rec_file_name[150] = "../work_files/dogs.mp4";
 		//char			rec_file_name[150] = "../work_files/dogs.mp4";
+//		
+		//char			rec_file_name[150] = "../work_files/matlab_Aid/square01.avi";
+		char			rec_file_name[150] = "../work_files/matlab_Aid/triangle.avi";
+		//		char			rec_file_name[150] = "../work_files/matlab_Aid/square001.avi";
 		cap					= VideoCapture(rec_file_name);
 	}
 
@@ -90,7 +96,8 @@ int main(int argc, char** argv)
 		frame_counter++;
 		///	
 		/* current frame processes */
-		resize   (frame, frame, newSize , 0, 0, INTER_CUBIC); 
+		if (App_Parameters.flags.do_frame_resize)
+			resize   (frame, frame, newSize , 0, 0, INTER_CUBIC); 
 		cvtColor (frame, gray, COLOR_BGR2GRAY);
 
 		//////////////////////////*  SLIC *///////////////////////////
@@ -154,7 +161,8 @@ int main(int argc, char** argv)
 			//			need also to prepare-back the inside-used functions for dealing with sevevral frames.
 			//			mainly for the temporal option.
 
-			// 			calc_unary_potentials(frame_votes, );
+				//Slic *segmented_slic
+			calc_unary_potentials(  &SlicOutput ,  frame_votes );
 
 			/* optional section according to user parameter input */
 			if (App_Parameters.flags.export_frames_to_Mat) {

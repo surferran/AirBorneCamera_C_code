@@ -81,5 +81,8 @@
     <ClInclude Include="..\src\ourConverted\calcSuperpixelInRatio.hpp">
       <Filter>Header Files\part2</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\functions_file1.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

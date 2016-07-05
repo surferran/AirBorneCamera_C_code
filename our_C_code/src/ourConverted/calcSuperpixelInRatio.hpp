@@ -16,6 +16,6 @@
 #define SP_IN_RATIOS_HPP 
 
 void calcSuperpixelInRatio(unsigned int *superpixels, int height, int width,const unsigned short *labels, bool *inOutMap,
-	float * output);
+							float * output);
 
 #endif

@@ -1,5 +1,5 @@
 #include "composed_algorithm.hpp"
-//#include "functions_file1.cpp"
+
 
 void copy_vectors_to_array(int w, int h,  Slic *slic_obj, unsigned int * out_array)
 {
@@ -51,6 +51,42 @@ void copy_floatMat_to_shortArray(int w, int h,  Mat & flow , short * out_array)
 	}
 
 	
+}
+
+void copy_boolMat_to_boolArray(int w, int h,  Mat & flow , short * out_array)
+{
+	float* tmp = NULL;
+	float* tmpX = NULL;
+	float* tmpY = NULL;
+
+	unsigned int elements = h* w;
+	/*
+	const Point2f& fxy = flow.at<Point2f>(y, x);
+	Mag2 = vecFactor*fxy.x*fxy.x*vecFactor + vecFactor*fxy.y*fxy.y*vecFactor ;       */
+
+	cv::Mat xy[2]; //X,Y
+	cv::split(flow, xy);
+
+	///cv::cartToPolar(xy[0], xy[1], magnitude, angle, false);
+
+
+	for (int i=0; i<h; i++)
+	{	
+		tmp =  flow.ptr<float>(i);
+		tmpX = xy[0].ptr<float>(i);
+		tmpY = xy[1].ptr<float>(i);
+		for(int j=0; j<w; j++)
+		{
+
+			const Point2f& fxy = flow.at<Point2f>(i, j);
+			//out_array[i+ j*h] = (short)tmp[j];  // this should be fine for a Mat.
+			/// all lines are flatten in sequence
+			out_array[i+ j*h]				= (short)tmpX[j];  // this should be fine for a Mat.
+			out_array[i+ j*h + elements]	= (short)tmpY[j];  // this should be fine for a Mat.
+		}
+	}
+
+
 }
 
 /* calculate the color and centers-geometric distances of the SuperPixels,
@@ -171,10 +207,7 @@ void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat
 	//convert segmented_slic.clusters to required input format
 	size_t	W				= segmented_slic->return_clusters_size();		// assumed same for current and previous frames
 	size_t	H				= segmented_slic->return_clusters_size2();		// -"-
-	long	num_of_sPixels	= segmented_slic->return_num_of_superpixels() ;
-	unsigned int w = W;
-	unsigned int h = H;
-	///unsigned int eNum = num_of_sPixels;
+	long	num_of_sPixels	= segmented_slic->return_num_of_superpixels() ; 
 
 		// ref: convert vector to array pointer by : http://stackoverflow.com/questions/1733143/converting-between-c-stdvector-and-c-array-without-copying
 		//		or : http://stackoverflow.com/questions/6946217/pointer-to-a-vector
@@ -198,8 +231,8 @@ void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat
 
 	copy_vectors_to_array(W,H,segmented_slic,converted_vector2d_slic); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
 
-	calcSpatialConnections(converted_vector2d_slic , H, W, num_of_sPixels
-								, spatial_sources, spatial_targets, &spatial_vectors_len);
+	calcSpatialConnections(	converted_vector2d_slic , H, W, num_of_sPixels ,
+							spatial_sources, spatial_targets, &spatial_vectors_len);
 
 	/////////
 
@@ -278,9 +311,7 @@ void calc_inRatios(Slic *segmented_slic, Mat &votes, float  * inRatios)
 	//convert segmented_slic.clusters to required input format
 	size_t	W				= segmented_slic->return_clusters_size();		// assumed same for current and previous frames
 	size_t	H				= segmented_slic->return_clusters_size2();		// -"-
-	long	num_of_sPixels	= segmented_slic->return_num_of_superpixels() ;
-	unsigned int w = W;
-	unsigned int h = H;
+	long	num_of_sPixels	= segmented_slic->return_num_of_superpixels() ; 
 	///unsigned int eNum = num_of_sPixels;
 
 	// ref: convert vector to array pointer by : http://stackoverflow.com/questions/1733143/converting-between-c-stdvector-and-c-array-without-copying
@@ -289,7 +320,7 @@ void calc_inRatios(Slic *segmented_slic, Mat &votes, float  * inRatios)
 	//		& c this at end : http://stackoverflow.com/questions/6734472/how-to-get-a-pointer-to-a-2d-stdvectors-contents
 
 	int				vec_size						= W*H;
-	short			* converted_Mat_flow			= new short		   [vec_size*2]; // for 2 channels of the OpticalFlow data
+	short			* converted_Mat_Votes			= new short		   [vec_size*2]; // for 2 channels of the OpticalFlow data
 	unsigned int	* converted_vector2d_slic		= new unsigned int [vec_size];
 	unsigned int	* converted_vector2d_prevSlic	= new unsigned int [vec_size];
 	unsigned int	*spatial_sources				= new unsigned int [vec_size];
@@ -306,11 +337,11 @@ void calc_inRatios(Slic *segmented_slic, Mat &votes, float  * inRatios)
 	/////////
 
 	copy_vectors_to_array(W,H,	segmented_slic,	converted_vector2d_slic); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
-	///copy_floatMat_to_shortArray(W,H,flow,converted_Mat_flow); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
+//	copy_floatMat_to_shortArray(W,H, votes , converted_Mat_Votes); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
 
-///	calcSuperpixelInRatio(converted_vector2d_slic, h, w,&num_of_sPixels, votes, inRatios);
+//	calcSuperpixelInRatio(converted_vector2d_slic, H, W, &num_of_sPixels, converted_Mat_Votes, inRatios );
 
-	if ( converted_Mat_flow	)			delete converted_Mat_flow;
+	//if ( converted_Mat_flow	)			delete converted_Mat_flow;
 	if (converted_vector2d_slic) 		delete converted_vector2d_slic; 
 	if (converted_vector2d_prevSlic) 	delete converted_vector2d_prevSlic; 
 	if (spatial_sources)				delete spatial_sources; 
@@ -324,16 +355,14 @@ void calc_inRatios(Slic *segmented_slic, Mat &votes, float  * inRatios)
 
 // algorithm functions. section 3.2 in the article //
 // calcualte spatial and temporal functions //
-void calc_unary_potentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &flow, long long superPixels_accumulated)
+void calc_unary_potentials(Slic *segmented_slic, Mat &frame_Votes)
 {
 	
 	//convert segmented_slic.clusters to required input format
 	size_t	W				= segmented_slic->return_clusters_size();		// assumed same for current and previous frames
 	size_t	H				= segmented_slic->return_clusters_size2();		// -"-
 	long	num_of_sPixels	= segmented_slic->return_num_of_superpixels() ;
-	unsigned int w = W;
-	unsigned int h = H;
-
+	
 
 	int				vec_size						= W*H;
 	short			* converted_Mat_flow			= new short		   [vec_size];
@@ -344,9 +373,6 @@ void calc_unary_potentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &
 	unsigned int	*temporal_sources				= new unsigned int [vec_size];
 	unsigned int	*temporal_targets				= new unsigned int [vec_size];
 	float			*connectionRatio				= new float		   [vec_size];
-
-
-
 
 	/*
 		accumulateInOutMap
@@ -370,9 +396,6 @@ void calc_unary_potentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &
 		unaryPotentials as Log ..
 
 		maxflow_mex_optimisedWrapper
-
-
-
 
 	 */
 	if ( converted_Mat_flow	)			delete converted_Mat_flow;

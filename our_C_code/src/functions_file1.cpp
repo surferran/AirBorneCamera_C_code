@@ -1,5 +1,6 @@
+#include "functions_file1.hpp"
 
-static void help_fback()
+void help_fback()
 {
 	cout <<
 		"\ncontents: \n implementation of ---dense optical flow--- algorithm by Gunnar Farneback\n" <<
@@ -9,7 +10,7 @@ static void help_fback()
 }
 
 // add some vectors accodring to scale factor , to the original image //
-static void drawOptFlowMap(const Mat& flow, Mat& cflowmap, int step,
+void drawOptFlowMap(const Mat& flow, Mat& cflowmap, int step,
 	double vecFactor, const Scalar& color)
 {
 	float Mag2=0;
@@ -320,7 +321,9 @@ Mat& calc_total_8_votes(Mat& out1, Mat& out2, Mat& out3, Mat& out4, Mat& totalVo
 
 		tmp21	= out2.ptr<float>(i-1);
 		tmp22	= out2.ptr<float>(nRows-1);
+
 		tmp31	= out3.ptr<float>(i-1);
+
 		tmp41	= out4.ptr<float>(i-1);
 
 		for ( j = 1 ; j < nCols ; ++j )   // TODO: fix later for the last column . now finishes 1 colun before that
@@ -332,7 +335,7 @@ Mat& calc_total_8_votes(Mat& out1, Mat& out2, Mat& out3, Mat& out4, Mat& totalVo
 			//horizontal in direction 1
 			if (p1[j-1]==1) votes++;
 			//horizontal in direction 2
-			if ((p1[nCols]-p1[j])!=0) votes++;
+			if ((p1[nCols-1]-p1[j])!=0) votes++;
 
 			//vetical in direction 1
 			if (tmp21[j]==1) votes++;
@@ -391,61 +394,62 @@ void calc_motion_boundaries(const Mat &flow, Mat &totalVotes){
 	cv::Mat magnitude_grad, angle_grad;
 	cv::cartToPolar(xy[0], xy[1], magnitude, angle, false);
 	//// TODO: put these plots under 'debug_level_flags' to allow imidiaate plot enable/disable
-	//imshow("magnitude",magnitude);
-	//imshow("angle",angle);
 
-	//Sobel( magnitude, magnitude_grad, CV_32F, 0, 1, 3/*, scale, delta, BORDER_DEFAULT*/ );
+	if (App_Parameters.flags.allow_debug_plots_1)
+	{
+		imshow("magnitude"	,magnitude);
+		imshow("angle"		,angle);
+	}
+
 	Laplacian( magnitude, magnitude_grad, CV_32F);
-	//Sobel( angle, angle_grad, CV_32F, 0,1, 3/*, scale, delta, BORDER_DEFAULT*/ );
-	Laplacian( angle, angle_grad, CV_32F);
+	Laplacian( angle	, angle_grad	, CV_32F);
 
 	double mag_max,			angle_max;
 	double mag_grad_max,	angle_grad_max;
 
+	
+	////////// section only for display intermidiate motion bouderies //////////
+	//translate magnitude to range [0;1]
+	cv::minMaxLoc(magnitude, 0, &mag_max);
+	magnitude.convertTo(magnitude, -1, 1.0 / mag_max);
+
+	//translate magnitude to range [0;1]
+	cv::minMaxLoc(magnitude_grad, 0, &mag_grad_max);
+	magnitude_grad.convertTo(magnitude_grad, -1, 1.0 / mag_grad_max);
+
+	cv::minMaxLoc(angle, 0, &angle_max);
+	angle.convertTo(angle, -1, 1.0 / angle_max);
+
+	//translate magnitude to range [0;1]
+	cv::minMaxLoc(angle_grad, 0, &angle_grad_max);
+	angle_grad.convertTo(angle_grad, -1, 1.0 / angle_grad_max);
+
+	////normalized plots
+	if (App_Parameters.flags.allow_debug_plots_2)
 	{
-		////////// section only for display intermidiate motion bouderies //////////
-		//translate magnitude to range [0;1]
-		cv::minMaxLoc(magnitude, 0, &mag_max);
-		magnitude.convertTo(magnitude, -1, 1.0 / mag_max);
-
-		//translate magnitude to range [0;1]
-		cv::minMaxLoc(magnitude_grad, 0, &mag_grad_max);
-		magnitude_grad.convertTo(magnitude_grad, -1, 1.0 / mag_grad_max);
-
-		cv::minMaxLoc(angle, 0, &angle_max);
-		angle.convertTo(angle, -1, 1.0 / angle_max);
-
-		//translate magnitude to range [0;1]
-		cv::minMaxLoc(angle_grad, 0, &angle_grad_max);
-		angle_grad.convertTo(angle_grad, -1, 1.0 / angle_grad_max);
-
-		////normalized plots
-		//imshow("magnitude normalized",magnitude); 
-		//imshow("angle normalized",angle);
-		//imshow("magnitude grad normalized",magnitude_grad); 
-		//imshow("angle grad normalized",angle_grad);
+		imshow("magnitude normalized"		,magnitude); 
+		imshow("angle normalized"			,angle);
+		imshow("magnitude grad normalized"	,magnitude_grad); 
+		imshow("angle grad normalized"		,angle_grad);
 
 		////build hsv image
-		//cv::Mat _hsv[3], hsv;
-		//_hsv[0] = angle_grad;
-		//_hsv[1] = cv::Mat::ones(angle.size(), CV_32F);
-		//_hsv[2] = magnitude_grad;
-		//cv::merge(_hsv, 3, hsv);
+		Mat _hsv[3], hsv;
+		_hsv[0] = angle_grad;
+		_hsv[1] = cv::Mat::ones(angle.size(), CV_32F);
+		_hsv[2] = magnitude_grad;
+		merge(_hsv, 3, hsv);
 
 		////convert to BGR and show
-		//cv::Mat bgr;//CV_32FC3 matrix
-		//cv::cvtColor(hsv, bgr, cv::COLOR_HSV2BGR);
-		//cv::imshow("optical flow _grad trial internet", bgr);
-		//////////// end of section only for display intermidiate motion bouderies //////////
+		Mat bgr;	//CV_32FC3 matrix
+		cvtColor(hsv, bgr, cv::COLOR_HSV2BGR);
+		imshow("optical flow _grad trial internet", bgr);
 	}
+	//////////// end of section only for display intermidiate motion bouderies //////////
+	
 
-	Mat tmp,
-		tmp2,
+	Mat tmp,		tmp2,
 		bp,
-		out1,
-		out2,
-		out3,
-		out4;
+		out1,		out2,		out3,		out4;
 
 	magnitude_grad	=	calc_bpm(magnitude_grad);
 	imshow("new mag grad as B_P_M ",magnitude_grad);
@@ -462,15 +466,15 @@ void calc_motion_boundaries(const Mat &flow, Mat &totalVotes){
 
 	imshow(" B_P",bp);
 
-	////medianBlur	(bp,	bp,	3);//9
-	//erode		(bp,	bp,	Mat());
+	////medianBlur	(bp,	bp,	3);		//9
+	//erode			(bp,	bp,	Mat());
 	//dilate		(bp,	bp,	Mat());
 
-	dilate		(bp,	bp,	Mat());
-	medianBlur	(bp,	bp,	5);//9
-	erode		(bp,	bp,	Mat()); ///
+	//dilate		(bp,	bp,	Mat());
+	//medianBlur	(bp,	bp,	5);//9
+	//erode		(bp,	bp,	Mat()); ///
 
-	imshow("new B_P",bp);
+	//imshow("new B_P",bp);
 
 	/* pass to function of 'calc_S_matrices' */
 	// calculate votes for several directions :
