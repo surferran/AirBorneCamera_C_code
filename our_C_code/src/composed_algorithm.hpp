@@ -14,7 +14,8 @@ using namespace std;
 #include "ourConverted\calcSuperpixelInRatio.hpp"
 #include "functions_file1.hpp"
 
-///#include "some_utils\writeMat.hpp"   //TODO: check how to include this and operate the function
+///
+#include "some_utils\writeMat.hpp"   //TODO: check how to include this and operate the function
 //#include <ctime>				// ref by : http://stackoverflow.com/questions/2808398/easily-measure-elapsed-time 
 
 // algorithm functions. section 3.1 in the article //

@@ -205,9 +205,9 @@ void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat
 	
 
 	//convert segmented_slic.clusters to required input format
-	size_t	W				= segmented_slic->return_clusters_size();		// assumed same for current and previous frames
-	size_t	H				= segmented_slic->return_clusters_size2();		// -"-
-	long	num_of_sPixels	= segmented_slic->return_num_of_superpixels() ; 
+	size_t		W				= segmented_slic->return_clusters_size();		// assumed same for current and previous frames
+	size_t		H				= segmented_slic->return_clusters_size2();		// -"-
+	long long	num_of_sPixels	= segmented_slic->return_num_of_superpixels() ; 
 
 		// ref: convert vector to array pointer by : http://stackoverflow.com/questions/1733143/converting-between-c-stdvector-and-c-array-without-copying
 		//		or : http://stackoverflow.com/questions/6946217/pointer-to-a-vector

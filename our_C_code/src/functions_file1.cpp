@@ -1,6 +1,6 @@
 #include "functions_file1.hpp"
 
-void help_fback()
+void help_app()
 {
 	cout <<
 		"\ncontents: \n implementation of ---dense optical flow--- algorithm by Gunnar Farneback\n" <<
@@ -29,69 +29,71 @@ void drawOptFlowMap(const Mat& flow, Mat& cflowmap, int step,
 }
 
 // algorithm functions. section 3.1 in the article //
-Mat& calc_bpm(Mat& I)  //I is magnitude //float32
+void calc_bpm(Mat& flow_grad_mag, Mat& result)   
 {
-	float	der_mag ,	b_m_p,		lambda_m = 0.7; // can be about 0.7 to 1.5, or else..
+	float	der_mag ,	b_m_p;
+	double 	lambda_m = App_Parameters.algs_params.lambda_magnitude; 							
 
-													// accept only char type matrices
-	CV_Assert(I.depth() != sizeof(float));
+	int channels	= flow_grad_mag.channels();
+	int nRows		= flow_grad_mag.rows;
+	int nCols		= flow_grad_mag.cols * channels; 
 
-	int channels	= I.channels();
-	int nRows		= I.rows;
-	int nCols		= I.cols * channels;  //=I.stride;
-										  //int nCols = sizeof(I.type());
-										  //int nDims = I.dims;
 	int i,j;
 	float* p;
+	float* pOut;
 	for( i = 0; i < nRows; ++i)
 	{
-		p = I.ptr<float>(i);
+		p = flow_grad_mag.ptr<float>(i);
+		pOut = result.ptr<float>(i);
 		for ( j = 0; j < nCols ; ++j )
 		{		
 			der_mag		= abs(p[j]);
-			p[j]		= 1 - exp(-lambda_m * der_mag);	
+			pOut[j]		= 1 - exp(-lambda_m * der_mag);	
 		}
-	}
-	//p is the new b_m_p matrix. running over the original I matrix
-	return I;
+	} 
 }
 
 // algorithm functions. section 3.1 in the article //
-bool calc_bpTheta( Mat& I ,Mat& out_bpTheta )  //I is angle //float32
+void calc_bpTheta( Mat& alpha_input,Mat& flowX ,Mat& flowY ,Mat& out_bpTheta )  
 {
-	float 	ang_diff,		ang_nom,			delta_ang_max,		temp,
-		b_theta_p,			lambda_t = 1;
-	int		mask = 10;
+	double	lambda_t	=	App_Parameters.algs_params.lamda_theta;
+	float 	ang_diff,		delta_ang_max,		temp,
+			b_theta_p;
+	///int		mask = 2;	//10
 
-	out_bpTheta = I.clone();
+	out_bpTheta		= Mat::zeros(alpha_input.size(),alpha_input.type());
 
-	// accept only char type matrices
-	CV_Assert(I.depth() != sizeof(float));
+	int channels	= alpha_input.channels();
+	int nRows		= alpha_input.rows;
+	int nCols		= alpha_input.cols * channels;		
 
-	int channels	= I.channels();
-	int nRows		= I.rows;
-	int nCols		= I.cols * channels;  //=I.stride;
-										  //int nCols = sizeof(I.type());
-										  //int nDims = I.dims;
-	int i,j;
-	float* p;
+	int		i,j;
+	float* pIn;
 	float* p_1,*p1;
-	float* pT;
-	////p = I.ptr<float>(0.0);
+	float* pOut;
+
+	float* pFlowX;
+	float* pFlowY;
+
 	for( i = 1; i < nRows-1; ++i)
 	{
-		p = I.ptr<float>(i);
-		p_1 = I.ptr<float>(i-1);
-		p1  = I.ptr<float>(i+1);
-		pT = out_bpTheta.ptr<float>(i);
+		pIn	= alpha_input.ptr<float>(i);		// pointer to current line of alpha_input matrix
+		p_1 = alpha_input.ptr<float>(i-1);		// previous line
+		p1  = alpha_input.ptr<float>(i+1);		// next line
+		pOut= out_bpTheta.ptr<float>(i);		// pointer to current element in output matrix
+		pFlowX = flowX.ptr<float>(i);
+		pFlowY = flowY.ptr<float>(i);
 		for ( j = 1; j < nCols-1 ; ++j )
 		{		
 			b_theta_p = 0;
-			if ( (j > mask) && (i > mask) && (j < nCols - mask) && (i < nRows - mask) )
+			/* make difference between angles value 0 because angle or because no O.flow */
+			if ((pFlowX[j]==0) && (pFlowY[j]==0)) 
+				pIn[j] = 99;
+			///if ( (j > mask) && (i > mask) && (j < nCols - mask) && (i < nRows - mask) )
 			{
 				// find the biggest angle difference for the b_theta_p
 				delta_ang_max	= 0;
-				ang_nom			= p[j];
+				//ang_nom			= pIn[j];	// element alpha(i,j)
 				//// remember that j,i+1 smaller then size of matrix cols,rows  . just keep mask>1 always
 				//for (int ang1 = -1; ang1 < 1; ang1++)
 				//{
@@ -107,70 +109,70 @@ bool calc_bpTheta( Mat& I ,Mat& out_bpTheta )  //I is angle //float32
 				//	}
 				//}
 
+				/// check diffs only on Horizontal and Vertical directions. no need for the diagonals !
 				// check the side elements
-				ang_diff = ((p[j-1]-p[j])*(p[j-1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
-				ang_diff = ((p[j+1]-p[j])*(p[j+1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
-				// check the above elements
-				ang_diff = ((p_1[j-1]-p[j])*(p_1[j-1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
-				ang_diff = ((p_1[j]  -p[j])*(p_1[j]  -p[j])); 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
-				ang_diff = ((p_1[j+1]-p[j])*(p_1[j+1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
-				// check the buttom elements
-				ang_diff = ((p1[j-1]-p[j])*(p1[j-1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
-				ang_diff = ((p1[j]  -p[j])*(p1[j]  -p[j])); 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
-				ang_diff = ((p1[j+1]-p[j])*(p1[j+1]-p[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
+				ang_diff = ((pIn[j-1]-pIn[j])*(pIn[j-1]-pIn[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
+				ang_diff = ((pIn[j+1]-pIn[j])*(pIn[j+1]-pIn[j])) ; 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ;
+				// check the above elements 
+				ang_diff = ((p_1[j]  -pIn[j])*(p_1[j]  -pIn[j])); 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ; 
+				// check the buttom elements 
+				ang_diff = ((p1[j]  -pIn[j])*(p1[j]  -pIn[j])); 	if (ang_diff>delta_ang_max) delta_ang_max = ang_diff ; 
 
 				b_theta_p = 1 - exp(-lambda_t * delta_ang_max);
 
 			}
-			pT[j] =  b_theta_p;
+			pOut[j] =  b_theta_p;
 		}
-	}
-	//p is the new b_m_p matrix. running over the original I matrix
-	return true;
+	} 
 }
 
 // algorithm functions. section 3.1 in the article //
-Mat& calc_bp_total(Mat& bpm, Mat& bpTheta)  //I is magnitude //float32
-{
-	float	T_threshold_top	= 0.023;//0.025;  //0.08
-	float	T_threshold_low	= 0.007;
-	float	T2_threshold	= 0.077;//0.20; // 0.05
-
-									// accept only char type matrices
-	CV_Assert(bpm.depth() != sizeof(float));
+void calc_bp_total(Mat& bpm, Mat& bpTheta, Mat& bp_Out)   
+{	
+	double	T_threshold_top	= App_Parameters.algs_params.b_p_m_high_level;
+	float	T_threshold_low	= App_Parameters.algs_params.b_p_m_low_level;
+	float	min_factor		= App_Parameters.algs_params.BP_minimizing_factor;
+	float	T2_threshold	= App_Parameters.algs_params.T2_threshold;
+	float	split_level		= App_Parameters.algs_params.mid_level;
 
 	int channels	= bpm.channels();
 	int nRows		= bpm.rows;
-	int nCols		= bpm.cols * channels;  //=bpm.stride;
-											//int nCols = sizeof(bpm.type());
-											//int nDims = bpm.dims;
+	int nCols		= bpm.cols * channels;  
+
 	int i,j;
-	float* p;
+	float* pM;
 	float* pT;
+	float* pOut;
 	for( i = 0; i < nRows; ++i)
 	{
-		p  = bpm.ptr<float>(i);
-		pT = bpTheta.ptr<float>(i);
+		pM		= bpm.ptr<float>(i);
+		pT		= bpTheta.ptr<float>(i);
+		pOut	= bp_Out.ptr<float>(i);
+		
 		for ( j = 0; j < nCols ; ++j )
 		{		
-			if ( (p[j] <= T_threshold_top) && (p[j] > T_threshold_low) )
-			{
-				p[j] *= pT[j];
-			}	
-			p[j] = p[j] > T2_threshold ? 1.0 : 0.0 ;
+			if (pM[j] <= T_threshold_low)
+				pOut[j] = pM[j] *min_factor;			// according to article code. it doen't written in the paper
+
+			if ( (pM[j] <= T_threshold_top) && (pM[j] > T_threshold_low) )			
+				pOut[j] = pM[j]*pT[j];	
+
+			if (pM[j] > T_threshold_top)
+				pOut[j] = pM[j] ;
+
+			if (pOut[j] > split_level/10)
+				pOut[j] = 1 ;
+			else
+				pOut[j] = 0 ;
 		}
-	}
-	//p is the new b_p matrix. running over the original bpm matrix
-	// this is equition 3 in article, and figure 1f.
-	return bpm;
+	} 	 
 }
 
 // algorithm functions. section 3.1 in the article //
 // calculates votes for horizontal and vertical directions //
-Mat& calc_votes_1(Mat& bp, Mat& out1 )
-{								  // accept only char type matrices
-	CV_Assert(bp.depth() != sizeof(float));
-
+void calc_votes_1(Mat& bp, Mat& out1 )
+{					
+	float	split_level		= App_Parameters.algs_params.mid_level;
 	out1 = Mat::zeros(bp.size(),bp.type());
 
 	int channels	= bp.channels();//
@@ -192,32 +194,27 @@ Mat& calc_votes_1(Mat& bp, Mat& out1 )
 		pO		= out1.ptr<float>(i);
 		for ( j = 0+1 ; j < nCols ; ++j )   // consider treat the mask value
 		{		
-			if ( (p[j] > 0.5) && (p[j-1] <= 0.5) )  // pass a boundery
+			if ( (p[j] > split_level) && (p[j-1] <= split_level) )  // pass a boundery
 			{
 				cuts ++;
 				odd_or_one= odd_or_one==1 ? 0: 1; // not 1-odd_or_one to prevent num.error problem
 			}
 			pO[j] = odd_or_one;//cuts;			
 		}
-	}
-	//p is the new b_p matrix. running over the original bpm matrix
-	// this is calcultion of the horizontal votes
-	return out1;
+	} 
 }
 
 // algorithm functions. section 3.1 in the article //
 // calculates votes for diagonal right and left directions //
-Mat& calc_votes_2(Mat& bp, Mat& out3)  // out_i is Si
-{								  // accept only char type matrices?
-	CV_Assert(bp.depth() != sizeof(float));
-
+void calc_votes_2(Mat& bp, Mat& out3)   
+{								
+	float	split_level		= App_Parameters.algs_params.mid_level;
 	out3 = Mat::zeros(bp.size(),bp.type());
 
 	if (!bp.isContinuous())
 	{
 		// http://docs.opencv.org/3.1.0/d3/d63/classcv_1_1Mat.html#aff83775c7fc1479de5f4a8c4e67fe361 
 		cout << " indeces design ERROR - no continues stoarge... (in 'calc_votes_2') "; //because of matrix/pointer indexing
-		return out3;  
 	}
 
 	int channels	= bp.channels();//
@@ -233,11 +230,8 @@ Mat& calc_votes_2(Mat& bp, Mat& out3)  // out_i is Si
 	float *pl_1;//, *pl1; // pointers for the previous and next lines
 	float *pO;
 
-	//p		= bp.ptr<float>(0);		// pointer to initial row. 1st element.
-	//pO		= out3.ptr<float>(0);	// -"-
-
 	// first section - go over all columns from left to right of the matrix.
-	for( j = 2; j < nCols; ++j)
+	for( j = 1; j < nCols; ++j)//2
 	{
 		cuts	= 0;	
 		odd_or_one=0;
@@ -252,7 +246,7 @@ Mat& calc_votes_2(Mat& bp, Mat& out3)  // out_i is Si
 				pO[k] = 0;
 				break;
 			}
-			if ( (p[k] > 0.5) && (pl_1[k+1] <= 0.5) )  // pass a boundery
+			if ( (p[k] > split_level) && (pl_1[k+1] <= split_level) )  // pass a boundery
 			{
 				cuts ++;
 				odd_or_one= odd_or_one==1 ? 0: 1; // not 1-odd_or_one to prevent num.error problem
@@ -278,7 +272,7 @@ Mat& calc_votes_2(Mat& bp, Mat& out3)  // out_i is Si
 				pO[k] = 0;
 				break;
 			}
-			if ( (p[k] > 0.5) && (pl_1[k+1] <= 0.5) )  // pass a boundery
+			if ( (p[k] > split_level) && (pl_1[k+1] <= split_level) )  // pass a boundery
 			{
 				cuts ++;
 				odd_or_one= odd_or_one==1 ? 0: 1;
@@ -286,15 +280,11 @@ Mat& calc_votes_2(Mat& bp, Mat& out3)  // out_i is Si
 			pO[k] =  odd_or_one;//cuts;				
 		}
 	}
-
-	//p is the new b_p matrix. running over the original bpm matrix
-	// this is calcultion of the diagonal votes
-	return out3;
 }
 
 // algorithm functions. section 3.1 in the article //
 // result is inside outside maps
-Mat& calc_total_8_votes(Mat& out1, Mat& out2, Mat& out3, Mat& out4, Mat& totalVotes)  // out_i is Si. all matrices should be in same sizes (assumed. not verified)
+void calc_total_8_votes(Mat& out1, Mat& out2, Mat& out3, Mat& out4, Mat& totalVotes)  // out_i is Si. all matrices should be in same sizes (assumed. not verified)
 {								 
 	totalVotes = Mat::zeros(out1.size(), out1.type());
 
@@ -353,22 +343,22 @@ Mat& calc_total_8_votes(Mat& out1, Mat& out2, Mat& out3, Mat& out4, Mat& totalVo
 			else                                    // the closer part of the matrix columns. take the 'transpose' element as the end element
 			{
 				tmp32	= out3.ptr<float>(j+i);
-				if ((tmp32[0]-p3[j])!=0) votes++;
+			///	if ((tmp32[0]-p3[j])!=0) votes++;
 			}
 
-			//diagonal 2st in direction 1
+			//diagonal 2nd in direction 1
 			if (tmp41[j-1]==1) votes++;
-			////diagonal 2st in direction 2
-			//if (j <= nRows - i)						// the farther part of the matrix
-			//{
-			//	tmp42	= out4.ptr<float>(nRows-1);
-			//	if ((tmp42[j+( nRows - i)]-p4[j])!=0) votes++;
-			//}
-			//else                                    // the closer part of the matrix columns. take the 'transpose' element as the end element
-			//{
-			//	tmp42	= out4.ptr<float>(nCols-j-1);
-			//	if ((tmp42[nCols-1]-p4[j])!=0) votes++;
-			//}
+			//diagonal 2nd in direction 2
+			if (j <= nRows - i)						// the farther part of the matrix
+			{
+				tmp42	= out4.ptr<float>(nRows-1);
+			///	if ((tmp42[j+( nRows - i)]-p4[j])!=0) votes++;
+			}
+			else                                    // the closer part of the matrix columns. take the 'transpose' element as the end element
+			{
+				tmp42	= out4.ptr<float>(nCols-j-1);
+			///	if ((tmp42[nCols-1]-p4[j])!=0) votes++;
+			}
 
 
 			if (votes>4)
@@ -376,117 +366,69 @@ Mat& calc_total_8_votes(Mat& out1, Mat& out2, Mat& out3, Mat& out4, Mat& totalVo
 		}
 	}
 
-
-
-	//p is the new b_p matrix. running over the original bpm matrix
-	// this is calcultion of the diagonal votes
-	return totalVotes;
 }
 
 // algorithm functions. section 3.1 in the article //
 void calc_motion_boundaries(const Mat &flow, Mat &totalVotes){
 	//extraxt x and y channels
-	cv::Mat xy[2]; //X,Y
-	cv::split(flow, xy);
+	cv::Mat xy[2];	
+	cv::split(flow, xy);	//X,Y
+
+	/* imshow cannot plot 2channel Mat. 
+		we are seperating channels also for calculations */
+	/* calculate the gradient of the flow field */
+	cv::Mat flow_grad_X;
+	cv::Mat flow_grad_Y;
+	Laplacian( xy[0], flow_grad_X, CV_32F);	//consider using Sobel only
+	Laplacian( xy[1], flow_grad_Y, CV_32F);
+
+	if (App_Parameters.flags.allow_debug_plots_1)
+		imshow("flow_grad_X"	,flow_grad_X);
 
 	//calculate angle and magnitude
-	cv::Mat magnitude, angle;
-	cv::Mat magnitude_grad, angle_grad;
-	cv::cartToPolar(xy[0], xy[1], magnitude, angle, false);
-	//// TODO: put these plots under 'debug_level_flags' to allow imidiaate plot enable/disable
+	cv::Mat flow_grad_magnitude, angle;
+
+	phase(xy[0], xy[1], angle);					// angle in radians
+	magnitude(flow_grad_X, flow_grad_Y, flow_grad_magnitude);
 
 	if (App_Parameters.flags.allow_debug_plots_1)
 	{
-		imshow("magnitude"	,magnitude);
-		imshow("angle"		,angle);
+		imshow("flow_grad_magnitude"	,flow_grad_magnitude);
+		imshow("angle"					,angle);
 	}
-
-	Laplacian( magnitude, magnitude_grad, CV_32F);
-	Laplacian( angle	, angle_grad	, CV_32F);
-
-	double mag_max,			angle_max;
-	double mag_grad_max,	angle_grad_max;
-
 	
-	////////// section only for display intermidiate motion bouderies //////////
-	//translate magnitude to range [0;1]
-	cv::minMaxLoc(magnitude, 0, &mag_max);
-	magnitude.convertTo(magnitude, -1, 1.0 / mag_max);
+	Mat tmp,	tmp2,
+		bpm,	bptheta,	bp,
+		S1,		S2,			S3,		S4;
 
-	//translate magnitude to range [0;1]
-	cv::minMaxLoc(magnitude_grad, 0, &mag_grad_max);
-	magnitude_grad.convertTo(magnitude_grad, -1, 1.0 / mag_grad_max);
+	bpm		= Mat::zeros(angle.size(), angle.type());
+	bptheta = Mat::zeros(angle.size(), angle.type());
+	bp		= Mat::zeros(angle.size(), angle.type());
 
-	cv::minMaxLoc(angle, 0, &angle_max);
-	angle.convertTo(angle, -1, 1.0 / angle_max);
+	/* ****** gradient magnitude to BpM ****** */
+	calc_bpm(flow_grad_magnitude, bpm);		// calculate equation (1) in the article
+	imshow("B_P_M as flow_grad_magnitude",bpm);
 
-	//translate magnitude to range [0;1]
-	cv::minMaxLoc(angle_grad, 0, &angle_grad_max);
-	angle_grad.convertTo(angle_grad, -1, 1.0 / angle_grad_max);
+	/* ****** angle theta BpTheta ****** */	
+	calc_bpTheta(angle, xy[0], xy[1] , bptheta);				// calculate equation (2) in the article
+	imshow("B_P_TH as angle function",bptheta);
 
-	////normalized plots
-	if (App_Parameters.flags.allow_debug_plots_2)
-	{
-		imshow("magnitude normalized"		,magnitude); 
-		imshow("angle normalized"			,angle);
-		imshow("magnitude grad normalized"	,magnitude_grad); 
-		imshow("angle grad normalized"		,angle_grad);
+	/* getting a binaric Bp matrix */ 
+	calc_bp_total(bpm, bptheta, bp);
+	imshow("B_P total",bp);
 
-		////build hsv image
-		Mat _hsv[3], hsv;
-		_hsv[0] = angle_grad;
-		_hsv[1] = cv::Mat::ones(angle.size(), CV_32F);
-		_hsv[2] = magnitude_grad;
-		merge(_hsv, 3, hsv);
 
-		////convert to BGR and show
-		Mat bgr;	//CV_32FC3 matrix
-		cvtColor(hsv, bgr, cv::COLOR_HSV2BGR);
-		imshow("optical flow _grad trial internet", bgr);
-	}
-	//////////// end of section only for display intermidiate motion bouderies //////////
-	
-
-	Mat tmp,		tmp2,
-		bp,
-		out1,		out2,		out3,		out4;
-
-	magnitude_grad	=	calc_bpm(magnitude_grad);
-	imshow("new mag grad as B_P_M ",magnitude_grad);
-
-	calc_bpTheta(angle, tmp);  
-	imshow("new angle as B_P_TH",tmp);
-
-	bp =   calc_bp_total(magnitude_grad, tmp);
-
-	{
-		minMaxLoc(bp, 0, &mag_grad_max);
-		bp.convertTo(bp, -1, 1.0 / mag_grad_max);
-	}
-
-	imshow(" B_P",bp);
-
-	////medianBlur	(bp,	bp,	3);		//9
-	//erode			(bp,	bp,	Mat());
-	//dilate		(bp,	bp,	Mat());
-
-	//dilate		(bp,	bp,	Mat());
-	//medianBlur	(bp,	bp,	5);//9
-	//erode		(bp,	bp,	Mat()); ///
-
-	//imshow("new B_P",bp);
-
-	/* pass to function of 'calc_S_matrices' */
+	/************* part of 'calc_S_matrices' ******************/
 	// calculate votes for several directions :
-	out1 = calc_votes_1(bp,out1);			//horizontal DIRECTION
+	calc_votes_1(bp,S1);			//horizontal DIRECTION
 											//imshow("new vote1",out1);
 
 	transpose(bp, tmp); // original bp is now transposed into 'tmp'
-	out2 = calc_votes_1(tmp,out2);			//vertical DIRECTION
-	transpose(out2, out2);	// transpose back the outcome
+	calc_votes_1(tmp,S2);			//vertical DIRECTION
+	transpose(S2, S2);	// transpose back the outcome
 							//imshow("new vote2",out2);
 
-	out3 = calc_votes_2(bp, out3);	// calc diagonal crosses 
+	calc_votes_2(bp, S3);	// calc diagonal crosses 
 									//imshow("new vote3",out3);
 
 	float *p;
@@ -504,7 +446,7 @@ void calc_motion_boundaries(const Mat &flow, Mat &totalVotes){
 	//}
 	flip(bp,tmp2,1);
 	///imshow("tmp bp flippedd",tmp2);
-	tmp2 = calc_votes_2(tmp2, out4);	// calc diagonal crosses 
+	calc_votes_2(tmp2, S4);	// calc diagonal crosses 
 										//out4 = out4.clone();
 										///imshow("tmp2 output",tmp2);
 										//// set the output flipped again										
@@ -517,10 +459,10 @@ void calc_motion_boundaries(const Mat &flow, Mat &totalVotes){
 										//		pO[j]=p[tmp2.cols-1-j];		
 										//	}
 										//}
-	flip(tmp2,out4,1);
+	flip(tmp2,S4,1);
 	//imshow("new vote4",out4);
 
-	totalVotes= calc_total_8_votes(out1,out2,out3,out4,totalVotes);
+	calc_total_8_votes(S1,S2,S3,S4,totalVotes);
 	imshow("total votes",totalVotes);
 
 

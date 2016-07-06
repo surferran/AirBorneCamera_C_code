@@ -156,7 +156,7 @@
     <ClInclude Include="..\src\app_globals.h" />
     <ClInclude Include="..\src\composed_algorithm.hpp" />
     <ClInclude Include="..\src\functions_file1.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\src\ourConverted\calcSuperpixelInRatio.hpp" />
     <ClInclude Include="..\src\ourConverted\calcTemporalConnections.hpp" />
