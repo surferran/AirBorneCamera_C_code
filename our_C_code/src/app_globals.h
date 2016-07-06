@@ -29,10 +29,10 @@ struct App_flags {
 	bool	read_from_file			= true;   // true-read video file. false - for live capture from camera(0)
 	bool	measure_actions_timing	= true;		// to measure spesific calculations timings
 	bool	record_outputs			= false;	// save frames into physical .avi files.
-	bool	export_frames_to_Mat	= false;	// TODO: save frames into seperate .mat files. // for only optical flow now
+	bool	export_frames_to_Mat	= true;	// TODO: save frames into seperate .mat files. // for only optical flow now
 	bool	do_frame_resize			= true;		// allow to choose if resizing input-frame or not
-	//int		frame_resize_W			=	160;	// Width
-//int		frame_resize_H			=	120;	// Height
+
+	int		resize_factor			=	1;		// make 1/factor
     int		frame_resize_W			=	320;	// Width  
 	int		frame_resize_H			=	240;	// Height
 

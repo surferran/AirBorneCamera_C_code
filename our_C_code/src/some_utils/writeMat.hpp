@@ -23,8 +23,8 @@ http://code.opencv.org/issues/1342
  *  3-channel single-precision floating point matrices, and I hope
  *  it works on other types/channels, but not exactly sure.
  *  Documentation at <http://www.mathworks.com/help/pdf_doc/matlab/matfile_format.pdf>
- */
-
+ */ 
+ 
 //#define _CRT_SECURE_NO_WARNINGS  // in order to disable:  error C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 //#pragma warning(disable : 4996)
 

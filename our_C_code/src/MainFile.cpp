@@ -4,6 +4,7 @@
 //	change file names in code
 
 #include "composed_algorithm.hpp"
+#include "some_utils\writeMat.hpp" 
 
 Storage_4_frames			alg_database_current;
 vector<Storage_4_frames>	alg_DB_vec;
@@ -14,25 +15,26 @@ int main(int argc, char** argv)
 	bool vid_from_file	=  App_Parameters.flags.read_from_file;
 	int  vid_resize_W	=  App_Parameters.flags.frame_resize_W;
 	int  vid_resize_H	=  App_Parameters.flags.frame_resize_H; 
+	int  resize_factor	=  App_Parameters.flags.resize_factor; 
 
 	string	base_out_file_path	= "../work_files/optical_flow_as_Mat/";
 	string	framesCounterStr	= ""	, base_file_name = "" , file_full_name="", file_suffix = ".mat";	//base_file_name outMAt_
 	int		stream_frame_index	= 0;
 
-	Size	newSize(vid_resize_W, vid_resize_H);
+	Size	newSize(vid_resize_W / resize_factor, vid_resize_H / resize_factor);
 
 	VideoCapture cap; 
 
 	if (!vid_from_file)
 		cap = VideoCapture(0);
 	else
-	{		
-	//			char		rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\2_movement1_several_cars.00.avi";
-		//	  char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\MOVI0024.avi";
+	{	
 		//		char			rec_file_name[150] = "../work_files/matlab_Aid/square01.avi";
+		//			char			rec_file_name[150] = "../work_files/matlab_Aid/triangle.avi";
+		//char			rec_file_name[150] = "../work_files/car2.mov";
+		//char			rec_file_name[150] = "../work_files/car2.mov";
 		//	
-		char			rec_file_name[150] = "../work_files/matlab_Aid/triangle.avi";
-		//			char			rec_file_name[150] = "../work_files/matlab_Aid/square001.avi";
+		char			rec_file_name[150] = "../work_files/matlab_Aid/square001.avi";
 
 		//			char			rec_file_name[150] = "../work_files/matlab_Aid/circle.avi";
 
@@ -137,11 +139,27 @@ int main(int argc, char** argv)
 				//  TODO: 
 				//  add saving the mat to im file
 				//  add saving those two into accumulating aray file. for multi frame recording.
-
+				// check https://msdn.microsoft.com/query/dev14.query?appId=Dev14IDEF1&l=EN-US&k=k(LNK2019);k(vs.output)&rd=true
+				/***************** save the current Optical flow matrix ******************/
+				base_file_name = "flow_";
 				file_full_name = base_out_file_path + base_file_name + std::to_string(++stream_frame_index) + file_suffix;
 
-				const char * c = file_full_name.c_str();
-				//	writeMat(flow, c, "DOFframe"); //get returned byte . send number of images to be saved
+				const char * cF = file_full_name.c_str();
+				const char * st = "DOFframe";
+
+				//	
+				writeMat(flow, cF, st); //get returned byte . send number of images to be saved
+
+				/****************** save the current votes matrix ******************/
+				base_file_name = "votes_";
+				file_full_name = base_out_file_path + base_file_name + std::to_string(  stream_frame_index) + file_suffix;
+
+				const char * cV = file_full_name.c_str();
+				
+				//
+				writeMat(frame_votes, cV, "inMaps"); //get returned byte . send number of images to be saved
+
+				/* save also the current SLIC matrix ?*/
 			}
 
 		}
@@ -150,7 +168,7 @@ int main(int argc, char** argv)
 			break;
 
 		/* store the current frame data */	
-		alg_database_current.SPixels	= SlicOutput;
+			alg_database_current.SPixels	= SlicOutput;
 		if( !prevgray.empty() ) {
 			alg_database_current.DOF		= flow.clone();	
 			alg_database_current.Votes		= frame_votes.clone();

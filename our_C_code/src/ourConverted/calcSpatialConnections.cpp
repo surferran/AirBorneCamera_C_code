@@ -1,6 +1,6 @@
 
 #include "calcSpatialConnections.hpp"
- 
+  
 void calcSpatialConnections(unsigned int	   *superpixelMap,	// the superpixels segmantation matrix
 							unsigned int		height,			// the H of the frame
 							unsigned int		width,				// the W of the frame
