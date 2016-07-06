@@ -35,4 +35,8 @@ void calc_motion_boundaries(const Mat &flow, Mat &totalVotes);
 // calls the segmentation function of SLIC //
 void slic_for_frame(IplImage *image  , Slic &slic, long startingOffset)   ;
 
+/* function present in calcintegralIntersections.cpp */
+void calcintegralIntersections(  int height,  int width,  unsigned char* input ,
+	unsigned char *output);
+
 #endif

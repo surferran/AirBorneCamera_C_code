@@ -129,11 +129,11 @@ void calc_bpTheta( Mat& alpha_input,Mat& flowX ,Mat& flowY ,Mat& out_bpTheta )
 // algorithm functions. section 3.1 in the article //
 void calc_bp_total(Mat& bpm, Mat& bpTheta, Mat& bp_Out)   
 {	
-	double	T_threshold_top	= App_Parameters.algs_params.b_p_m_high_level;
-	float	T_threshold_low	= App_Parameters.algs_params.b_p_m_low_level;
-	float	min_factor		= App_Parameters.algs_params.BP_minimizing_factor;
-	float	T2_threshold	= App_Parameters.algs_params.T2_threshold;
-	float	split_level		= App_Parameters.algs_params.mid_level;
+	float	T_threshold_low		= App_Parameters.algs_params.b_p_m_low_level;
+	float	T_threshold_top		= App_Parameters.algs_params.b_p_m_high_level;
+	float	minimizing_factor	= App_Parameters.algs_params.BP_minimizing_factor;
+	//float	T2_threshold	= App_Parameters.algs_params.T2_threshold;
+	float	split_level			= App_Parameters.algs_params.mid_level / 3;
 
 	int channels	= bpm.channels();
 	int nRows		= bpm.rows;
@@ -152,7 +152,7 @@ void calc_bp_total(Mat& bpm, Mat& bpTheta, Mat& bp_Out)
 		for ( j = 0; j < nCols ; ++j )
 		{		
 			if (pM[j] <= T_threshold_low)
-				pOut[j] = pM[j] *min_factor;			// according to article code. it doen't written in the paper
+				pOut[j] = pM[j] *minimizing_factor;			// according to article code. it doen't written in the paper
 
 			if ( (pM[j] <= T_threshold_top) && (pM[j] > T_threshold_low) )			
 				pOut[j] = pM[j]*pT[j];	
@@ -160,7 +160,7 @@ void calc_bp_total(Mat& bpm, Mat& bpTheta, Mat& bp_Out)
 			if (pM[j] > T_threshold_top)
 				pOut[j] = pM[j] ;
 
-			if (pOut[j] > split_level/10)
+			if (pOut[j] > split_level)
 				pOut[j] = 1 ;
 			else
 				pOut[j] = 0 ;
@@ -186,6 +186,7 @@ void calc_votes_1(Mat& bp, Mat& out1 )
 	float* p;
 	float* pO;
 
+	/* normal progress direction is from left to right of the matrix */
 	for( i = 0; i < nRows; ++i)
 	{
 		cuts	= 0;
@@ -212,8 +213,7 @@ void calc_votes_2(Mat& bp, Mat& out3)
 	out3 = Mat::zeros(bp.size(),bp.type());
 
 	if (!bp.isContinuous())
-	{
-		// http://docs.opencv.org/3.1.0/d3/d63/classcv_1_1Mat.html#aff83775c7fc1479de5f4a8c4e67fe361 
+	{ 
 		cout << " indeces design ERROR - no continues stoarge... (in 'calc_votes_2') "; //because of matrix/pointer indexing
 	}
 
@@ -227,7 +227,7 @@ void calc_votes_2(Mat& bp, Mat& out3)
 		odd_or_one;
 
 	float *p;		// pointer to the current line
-	float *pl_1;//, *pl1; // pointers for the previous and next lines
+	float *p_1;//, *pl1; // pointers for the previous and next lines
 	float *pO;
 
 	// first section - go over all columns from left to right of the matrix.
@@ -238,15 +238,15 @@ void calc_votes_2(Mat& bp, Mat& out3)
 		k=j;
 		for ( i = 1 ; i < nRows ; ++i )    // 0(Zero) line is the assumed initial boundary condition, as background
 		{		
-			pl_1	= bp.ptr<float>(i-1);
+			p_1		= bp.ptr<float>(i-1);
 			p		= bp.ptr<float>(i);
-			pO		= out3.ptr<float>(i);   //TODO: test this section fro performance issues.
+			pO		= out3.ptr<float>(i);   //TODO: test this section for performance issues.
 			k=k-1;
 			if (k==0) {
 				pO[k] = 0;
 				break;
 			}
-			if ( (p[k] > split_level) && (pl_1[k+1] <= split_level) )  // pass a boundery
+			if ( (p[k] > split_level) && (p_1[k+1] <= split_level) )  // pass a boundery
 			{
 				cuts ++;
 				odd_or_one= odd_or_one==1 ? 0: 1; // not 1-odd_or_one to prevent num.error problem
@@ -264,7 +264,7 @@ void calc_votes_2(Mat& bp, Mat& out3)
 		k=j;
 		for ( i = w ; i < nRows ; ++i )   
 		{		
-			pl_1	= bp.ptr<float>(i-1);
+			p_1	= bp.ptr<float>(i-1);
 			p		= bp.ptr<float>(i);
 			pO		= out3.ptr<float>(i);   //TODO: test this section fro performance issues.
 			k=k-1;
@@ -272,7 +272,7 @@ void calc_votes_2(Mat& bp, Mat& out3)
 				pO[k] = 0;
 				break;
 			}
-			if ( (p[k] > split_level) && (pl_1[k+1] <= split_level) )  // pass a boundery
+			if ( (p[k] > split_level) && (p_1[k+1] <= split_level) )  // pass a boundery
 			{
 				cuts ++;
 				odd_or_one= odd_or_one==1 ? 0: 1;
@@ -417,6 +417,25 @@ void calc_motion_boundaries(const Mat &flow, Mat &totalVotes){
 	calc_bp_total(bpm, bptheta, bp);
 	imshow("B_P total",bp);
 
+	/////////////////////////////////////////
+	Size	sz		= bp.size();
+	int		h		= sz.height;
+	int		w		= sz.width;
+	long	vec_size = h*w;
+	unsigned char *flattened_bp				= new unsigned char [vec_size];
+	unsigned char *flattened_total_votes	= new unsigned char [vec_size];
+	totalVotes								= Mat::zeros(bp.size(), bp.type());
+
+	copy_binaricMat_to_ucharArray( w,  h,  bp , flattened_bp) ;
+	
+	calcintegralIntersections(h,w , flattened_bp, flattened_total_votes );
+	
+	copy_ucharArray_to_binaricMat(w,h, flattened_total_votes, totalVotes) ;
+	imshow("total votes REF",totalVotes);
+
+	delete flattened_bp;
+	delete flattened_total_votes;
+	//////////////////////////////////////////
 
 	/************* part of 'calc_S_matrices' ******************/
 	// calculate votes for several directions :

@@ -31,6 +31,9 @@
     <Filter Include="Header Files\part2">
       <UniqueIdentifier>{29cde20c-90af-4c16-8ad0-eebcc3c88708}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\set_votes">
+      <UniqueIdentifier>{374804d8-44df-4416-974c-5d215ec95954}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\MainFile.cpp" />
@@ -60,6 +63,9 @@
     </ClCompile>
     <ClCompile Include="..\src\functions_file1.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ourConverted\calcintegralIntersections.cpp">
+      <Filter>Source Files\set_votes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

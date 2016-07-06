@@ -27,12 +27,12 @@ int main(int argc, char** argv)
 		cap = VideoCapture(0);
 	else
 	{		
-	//		
-		char		rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\2_movement1_several_cars.00.avi";
+	//			char		rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\2_movement1_several_cars.00.avi";
 		//	  char			rec_file_name[150] = "C:\\Users\\Ran_the_User\\Documents\\GitHub\\AirBorneCamera_A\\Selected article\\FastVideoSegment_Files\\Data\\inputs\\mySample\\MOVI0024.avi";
 		//		char			rec_file_name[150] = "../work_files/matlab_Aid/square01.avi";
-		//	char			rec_file_name[150] = "../work_files/matlab_Aid/triangle.avi";
-		//	char			rec_file_name[150] = "../work_files/matlab_Aid/square001.avi";
+		//	
+		char			rec_file_name[150] = "../work_files/matlab_Aid/triangle.avi";
+		//			char			rec_file_name[150] = "../work_files/matlab_Aid/square001.avi";
 
 		//			char			rec_file_name[150] = "../work_files/matlab_Aid/circle.avi";
 

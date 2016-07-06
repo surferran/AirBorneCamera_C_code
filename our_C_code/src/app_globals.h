@@ -18,10 +18,10 @@ struct Alg_parameters {
 	//double	b_p_m_low_level			=	0.25;//	from article example code. in article it is not written
 	//double	b_p_m_high_level		=	0.6; //	from article example code. in article it is T in equation (3)
 	
-	double	b_p_m_low_level			=	0.007;//	from article example code. in article it is not written
-	double	b_p_m_high_level		=	0.023; //	from article example code. in article it is T in equation (3)
-	double 	T2_threshold			= 0.077;//0.20; // 0.05 
-	double 	BP_minimizing_factor	= 0.005;//0.1
+	double	b_p_m_low_level			=	0.0105;//	from article example code. in article it is not written
+	double	b_p_m_high_level		=	0.03; //	from article example code. in article it is T in equation (3)
+	///double 	T2_threshold			=   0.077;//0.20; // 0.05 
+	double 	BP_minimizing_factor	=   0.005;//0.1
 
 };
 
@@ -31,10 +31,10 @@ struct App_flags {
 	bool	record_outputs			= false;	// save frames into physical .avi files.
 	bool	export_frames_to_Mat	= false;	// TODO: save frames into seperate .mat files. // for only optical flow now
 	bool	do_frame_resize			= true;		// allow to choose if resizing input-frame or not
-	int		frame_resize_W			=	160;	// Width
-	int		frame_resize_H			=	120;	// Height
-	//int		frame_resize_W			=	320;	// Width  
-	//int		frame_resize_H			=	240;	// Height
+	//int		frame_resize_W			=	160;	// Width
+//int		frame_resize_H			=	120;	// Height
+    int		frame_resize_W			=	320;	// Width  
+	int		frame_resize_H			=	240;	// Height
 
 	bool	allow_debug_plots_1		= false;		// plots in section calc_motion_boundaries() begining
 	bool	allow_debug_plots_2		= false;		// plots in section calc_motion_boundaries() middle

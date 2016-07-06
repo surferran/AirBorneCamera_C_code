@@ -24,15 +24,9 @@ void copy_floatMat_to_shortArray(int w, int h,  Mat & flow , short * out_array)
 	float* tmpY = NULL;
 
 	unsigned int elements = h* w;
-/*
-	const Point2f& fxy = flow.at<Point2f>(y, x);
-	Mag2 = vecFactor*fxy.x*fxy.x*vecFactor + vecFactor*fxy.y*fxy.y*vecFactor ;       */
 
 	cv::Mat xy[2]; //X,Y
 	cv::split(flow, xy);
-
-	///cv::cartToPolar(xy[0], xy[1], magnitude, angle, false);
-
 
 	for (int i=0; i<h; i++)
 	{	
@@ -41,10 +35,7 @@ void copy_floatMat_to_shortArray(int w, int h,  Mat & flow , short * out_array)
 		tmpY = xy[1].ptr<float>(i);
 		for(int j=0; j<w; j++)
 		{
-
-			const Point2f& fxy = flow.at<Point2f>(i, j);
-			//out_array[i+ j*h] = (short)tmp[j];  // this should be fine for a Mat.
-												/// all lines are flatten in sequence
+			const Point2f& fxy = flow.at<Point2f>(i, j); 
 			out_array[i+ j*h]				= (short)tmpX[j];  // this should be fine for a Mat.
 			out_array[i+ j*h + elements]	= (short)tmpY[j];  // this should be fine for a Mat.
 		}
@@ -53,40 +44,31 @@ void copy_floatMat_to_shortArray(int w, int h,  Mat & flow , short * out_array)
 	
 }
 
-void copy_boolMat_to_boolArray(int w, int h,  Mat & flow , short * out_array)
+void copy_binaricMat_to_ucharArray(int w, int h,  Mat & bp ,  unsigned char * out_array)
 {
-	float* tmp = NULL;
-	float* tmpX = NULL;
-	float* tmpY = NULL;
-
-	unsigned int elements = h* w;
-	/*
-	const Point2f& fxy = flow.at<Point2f>(y, x);
-	Mag2 = vecFactor*fxy.x*fxy.x*vecFactor + vecFactor*fxy.y*fxy.y*vecFactor ;       */
-
-	cv::Mat xy[2]; //X,Y
-	cv::split(flow, xy);
-
-	///cv::cartToPolar(xy[0], xy[1], magnitude, angle, false);
-
+	float* tmp = NULL;  
 
 	for (int i=0; i<h; i++)
 	{	
-		tmp =  flow.ptr<float>(i);
-		tmpX = xy[0].ptr<float>(i);
-		tmpY = xy[1].ptr<float>(i);
+		tmp =  bp.ptr<float>(i);
 		for(int j=0; j<w; j++)
 		{
-
-			const Point2f& fxy = flow.at<Point2f>(i, j);
-			//out_array[i+ j*h] = (short)tmp[j];  // this should be fine for a Mat.
-			/// all lines are flatten in sequence
-			out_array[i+ j*h]				= (short)tmpX[j];  // this should be fine for a Mat.
-			out_array[i+ j*h + elements]	= (short)tmpY[j];  // this should be fine for a Mat.
+			out_array[i+ j*h] = (unsigned char)tmp[j];  
 		}
 	}
+}
+void copy_ucharArray_to_binaricMat(int w, int h, unsigned char * in_array , Mat & bp  )
+{
+	float* tmp = NULL;  
 
-
+	for (int i=0; i<h; i++)
+	{	
+		tmp =  bp.ptr<float>(i);
+		for(int j=0; j<w; j++)
+		{ 
+			tmp[j] = (float)in_array[i+ j*h];
+		}
+	}
 }
 
 /* calculate the color and centers-geometric distances of the SuperPixels,
@@ -214,7 +196,7 @@ void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat
 		//		& consider this: http://www.cprogramming.com/tutorial/stl/iterators.html
 		//		& c this at end : http://stackoverflow.com/questions/6734472/how-to-get-a-pointer-to-a-2d-stdvectors-contents
 
-	int				vec_size						= W*H;
+	long			vec_size						= W*H;
 	short			* converted_Mat_flow			= new short		   [vec_size*2]; // for 2 channels of the OpticalFlow data
 	unsigned int	* converted_vector2d_slic		= new unsigned int [vec_size];
 	unsigned int	* converted_vector2d_prevSlic	= new unsigned int [vec_size];
@@ -330,18 +312,14 @@ void calc_inRatios(Slic *segmented_slic, Mat &votes, float  * inRatios)
 	float			*connectionRatio				= new float		   [vec_size];
 	unsigned int	spatial_vectors_len				= 0;
 	unsigned int	temporal_vectors_len			= 0;
-
-	/*vector<double> spatial_color_dist;
-	vector<double> spatial_center_dist;
-	vector<double> temporal_color_dist , dummy;*/
-	/////////
+ 
 
 	copy_vectors_to_array(W,H,	segmented_slic,	converted_vector2d_slic); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
 //	copy_floatMat_to_shortArray(W,H, votes , converted_Mat_Votes); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
 
 //	calcSuperpixelInRatio(converted_vector2d_slic, H, W, &num_of_sPixels, converted_Mat_Votes, inRatios );
 
-	//if ( converted_Mat_flow	)			delete converted_Mat_flow;
+	if ( converted_Mat_Votes	)		delete converted_Mat_Votes;
 	if (converted_vector2d_slic) 		delete converted_vector2d_slic; 
 	if (converted_vector2d_prevSlic) 	delete converted_vector2d_prevSlic; 
 	if (spatial_sources)				delete spatial_sources; 

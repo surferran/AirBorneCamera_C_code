@@ -28,4 +28,9 @@ void calc_pairwisePotentials(Slic *segmented_slic , Slic *prev_segmented_slic , 
 
 void calc_unary_potentials(Slic *segmented_slic , Mat &frame_Votes);
 
+
+void copy_binaricMat_to_ucharArray(int w, int h,  Mat & bp ,  unsigned char * out_array);
+
+void copy_ucharArray_to_binaricMat(int w, int h, unsigned char * in_array , Mat & bp  );
+
 #endif
