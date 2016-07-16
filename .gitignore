@@ -61,3 +61,5 @@ our_C_code/AirborneCamera/Debug/vc140.pdb
 *.iobj
 *.ipdb
 *.MOV
+*.log
+*.suo
