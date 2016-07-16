@@ -53,3 +53,11 @@ our_C_code/Debug/AirborneCam.pdb
 our_C_code/AirborneCamera/Debug/vc140.pdb
 *.suo
 *.suo
+*.pdb
+*.log
+*.exe
+*.mp4
+*.suo
+*.iobj
+*.ipdb
+*.MOV

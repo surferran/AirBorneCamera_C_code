@@ -4,10 +4,20 @@
 //	change file names in code
 
 #include "composed_algorithm.hpp"
+
+#ifndef DEBUG
 #include "some_utils\writeMat.hpp" 
+#endif
 
 Storage_4_frames			alg_database_current;
 vector<Storage_4_frames>	alg_DB_vec;
+
+
+//added trial files
+#include "tested_sources\mySimpleVideoStabilizer.cpp"
+
+
+//////////////
 
 int main(int argc, char** argv)
 {
@@ -63,6 +73,16 @@ int main(int argc, char** argv)
 	Slic		SlicOutput , prevSlicOutput;
 
 	namedWindow("flow", 1); 
+
+
+	//////// trial addition .  massing up...
+
+	stabilizer_main(cap);
+
+
+
+	/////
+	return 0;
 
 	for(;;)
 	{
@@ -148,7 +168,9 @@ int main(int argc, char** argv)
 				const char * st = "DOFframe";
 
 				//	
-				writeMat(flow, cF, st); //get returned byte . send number of images to be saved
+#ifndef DEBUG
+					///writeMat(flow, cF, st); //get returned byte . send number of images to be saved
+#endif
 
 				/****************** save the current votes matrix ******************/
 				base_file_name = "votes_";
@@ -157,8 +179,9 @@ int main(int argc, char** argv)
 				const char * cV = file_full_name.c_str();
 				
 				//
-				writeMat(frame_votes, cV, "inMaps"); //get returned byte . send number of images to be saved
-
+#ifndef DEBUG
+			///	writeMat(frame_votes, cV, "inMaps"); //get returned byte . send number of images to be saved
+#endif
 				/* save also the current SLIC matrix ?*/
 			}
 
