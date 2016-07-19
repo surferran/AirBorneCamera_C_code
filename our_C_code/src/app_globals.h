@@ -17,19 +17,22 @@ struct Alg_parameters {
 											 //  can be about 0.7 to 1.5, or else..
 	//double	b_p_m_low_level			=	0.25;//	from article example code. in article it is not written
 	//double	b_p_m_high_level		=	0.6; //	from article example code. in article it is T in equation (3)
-	
-	double	b_p_m_low_level			=	0.0105;//	from article example code. in article it is not written
-	double	b_p_m_high_level		=	0.03; //	from article example code. in article it is T in equation (3)
+	//
+	//double	b_p_m_low_level			=	0.0105;//	from article example code. in article it is not written
+	//double	b_p_m_high_level		=	0.03; //	from article example code. in article it is T in equation (3)
 	///double 	T2_threshold			=   0.077;//0.20; // 0.05 
-	double 	BP_minimizing_factor	=   0.005;//0.1
+	double 	BP_minimizing_factor	=   0.1;//0.1
+
+	double	b_p_m_low_level			=	0.25;//	from article example code. in article it is not written
+	double	b_p_m_high_level		=	0.6; //	from arti
 
 };
 
 struct App_flags {
-	bool	read_from_file			= false;// true;   // true-read video file. false - for live capture from camera(0)
+	bool	read_from_file			= true;   // true-read video file. false - for live capture from camera(0)
 	bool	measure_actions_timing	= true;		// to measure spesific calculations timings
 	bool	record_outputs			= false;	// save frames into physical .avi files.
-	bool	export_frames_to_Mat	= false;	// TODO: save frames into seperate .mat files. // for only optical flow now
+	bool	export_frames_to_Mat	= true;	// TODO: save frames into seperate .mat files. // for optical flow & votes
 	bool	do_frame_resize			= true;		// allow to choose if resizing input-frame or not
 
 	int		resize_factor			=	1;		// make 1/factor

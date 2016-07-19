@@ -11,7 +11,7 @@ void help_app()
 
 // add some vectors accodring to scale factor , to the original image //
 void drawOptFlowMap(const Mat& flow, Mat& cflowmap, int step,
-	double vecFactor, const Scalar& color)
+						double vecFactor, const Scalar& color)
 {
 	float Mag2=0;
 
@@ -43,8 +43,8 @@ void calc_bpm(Mat& flow_grad_mag, Mat& result)
 	float* pOut;
 	for( i = 0; i < nRows; ++i)
 	{
-		p = flow_grad_mag.ptr<float>(i);
-		pOut = result.ptr<float>(i);
+		p		= flow_grad_mag	.ptr<float>(i);
+		pOut	= result		.ptr<float>(i);
 		for ( j = 0; j < nCols ; ++j )
 		{		
 			der_mag		= abs(p[j]);
@@ -133,7 +133,7 @@ void calc_bp_total(Mat& bpm, Mat& bpTheta, Mat& bp_Out)
 	float	T_threshold_top		= App_Parameters.algs_params.b_p_m_high_level;
 	float	minimizing_factor	= App_Parameters.algs_params.BP_minimizing_factor;
 	//float	T2_threshold	= App_Parameters.algs_params.T2_threshold;
-	float	split_level			= App_Parameters.algs_params.mid_level / 3;
+	float	split_level			= App_Parameters.algs_params.mid_level ;
 
 	int channels	= bpm.channels();
 	int nRows		= bpm.rows;
@@ -145,9 +145,9 @@ void calc_bp_total(Mat& bpm, Mat& bpTheta, Mat& bp_Out)
 	float* pOut;
 	for( i = 0; i < nRows; ++i)
 	{
-		pM		= bpm.ptr<float>(i);
-		pT		= bpTheta.ptr<float>(i);
-		pOut	= bp_Out.ptr<float>(i);
+		pM		= bpm		.ptr<float>(i);
+		pT		= bpTheta	.ptr<float>(i);
+		pOut	= bp_Out	.ptr<float>(i);
 		
 		for ( j = 0; j < nCols ; ++j )
 		{		
@@ -379,11 +379,34 @@ void calc_motion_boundaries(const Mat &flow, Mat &totalVotes){
 	/* calculate the gradient of the flow field */
 	cv::Mat flow_grad_X;
 	cv::Mat flow_grad_Y;
-	Laplacian( xy[0], flow_grad_X, CV_32F);	//consider using Sobel only
-	Laplacian( xy[1], flow_grad_Y, CV_32F);
+		// laplacian  is 2nd derivative..!
+	//Laplacian( xy[0], flow_grad_X, CV_32F);	//consider using Sobel only
+	//Laplacian( xy[1], flow_grad_Y, CV_32F);
+
+	Mat src, src_gray;
+	Mat grad;
+
+	int ksize = 1;
+	int scale = 1;
+	int delta = 0;
+	int ddepth = CV_32F;//CV_16S;//
+
+	// sobel gives 1st derivatives
+
+	/*CV_EXPORTS_W void Sobel( InputArray src, OutputArray dst, int ddepth,
+		int dx, int dy, int ksize = 3,
+		double scale = 1, double delta = 0,
+		int borderType = BORDER_DEFAULT );*/
+	Sobel(xy[0],flow_grad_X,ddepth, 1, 0, ksize, scale, delta, BORDER_DEFAULT ); // Scharr - without the '3' param
+	Sobel(xy[1],flow_grad_Y,ddepth, 0, 1, ksize, scale, delta, BORDER_DEFAULT ); //
+
+	///cv::split(flow, xy);	//X,Y
 
 	if (App_Parameters.flags.allow_debug_plots_1)
+	{
 		imshow("flow_grad_X"	,flow_grad_X);
+		imshow("flow_grad_Y"	,flow_grad_Y);
+	}
 
 	//calculate angle and magnitude
 	cv::Mat flow_grad_magnitude, angle;

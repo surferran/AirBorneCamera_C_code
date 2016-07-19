@@ -12,7 +12,7 @@ void writeMat( cv::Mat const& mat, const char* filename, const char* varName, bo
    char flags;
    int bytes;
    int padBytes;
-   int bytesPerElement;
+   int bytesPerElement; 
    int i,j,k,k2;
    bool doBgrSwap;
    char mxClass;

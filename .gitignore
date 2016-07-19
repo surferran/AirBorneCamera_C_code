@@ -63,3 +63,4 @@ our_C_code/AirborneCamera/Debug/vc140.pdb
 *.MOV
 *.log
 *.suo
+*.mat

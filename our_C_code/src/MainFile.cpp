@@ -4,6 +4,7 @@
 //	change file names in code
 
 #include "composed_algorithm.hpp"
+ 
 
 #ifndef DEBUG
 #include "some_utils\writeMat.hpp" 
@@ -26,8 +27,12 @@ int main(int argc, char** argv)
 	int  vid_resize_W	=  App_Parameters.flags.frame_resize_W;
 	int  vid_resize_H	=  App_Parameters.flags.frame_resize_H; 
 	int  resize_factor	=  App_Parameters.flags.resize_factor; 
+	bool file_from_imList = true;
 
-	string	base_out_file_path	= "../work_files/optical_flow_as_Mat/";
+	string images_list_BasePath = "C:/Users/Ran_the_User/Documents/GitHub/AirBorneCamera_A/Selected article/FastVideoSegment_Files/Data/inputs/animals/";
+	string file_format			= "0000%04d.jpg";    //enables to go through set of frames
+
+	string	base_out_file_path	= "../work_files/out_as_Mat/";
 	string	framesCounterStr	= ""	, base_file_name = "" , file_full_name="", file_suffix = ".mat";	//base_file_name outMAt_
 	int		stream_frame_index	= 0;
 
@@ -39,16 +44,24 @@ int main(int argc, char** argv)
 		cap = VideoCapture(0);
 	else
 	{	
-		//		char			rec_file_name[150] = "../work_files/matlab_Aid/square01.avi";
-		//			char			rec_file_name[150] = "../work_files/matlab_Aid/triangle.avi";
-		//char			rec_file_name[150] = "../work_files/car2.mov";
-		//char			rec_file_name[150] = "../work_files/car2.mov";
-		//	
-		char			rec_file_name[150] = "../work_files/matlab_Aid/square001.avi";
+		if (!file_from_imList)
+		{
+			//		char			rec_file_name[150] = "../work_files/matlab_Aid/square01.avi";
+			//			char			rec_file_name[150] = "../work_files/matlab_Aid/triangle.avi";
+			//char			rec_file_name[150] = "../work_files/car2.mov";
+			//char			rec_file_name[150] = "../work_files/car2.mov";
+			//	
+			char			rec_file_name[150] = "../work_files/matlab_Aid/square001.avi";
+			//			char			rec_file_name[150] = "../work_files/matlab_Aid/circle.avi";
+			cap					= VideoCapture(rec_file_name);
+		}
+		else{
+			const char *tmp = (images_list_BasePath + file_format).c_str();
 
-		//			char			rec_file_name[150] = "../work_files/matlab_Aid/circle.avi";
-
-		cap					= VideoCapture(rec_file_name);
+			file_full_name	= images_list_BasePath + file_format ;
+			const char * cF = file_full_name.c_str();
+			cap					= VideoCapture(cF);
+		}
 	}
 	if( !cap.isOpened() )
 		return -1;
@@ -77,12 +90,11 @@ int main(int argc, char** argv)
 
 	//////// trial addition .  massing up...
 
-	stabilizer_main(cap);
-
-
+	///stabilizer_main(cap);
+	///return 0;
 
 	/////
-	return 0;
+
 
 	for(;;)
 	{
@@ -119,7 +131,18 @@ int main(int argc, char** argv)
 				t = (double)getTickCount();
 
 			/* calc optical flow between two frames */
-			calcOpticalFlowFarneback(prevgray, gray, uflow, 0.5, 3, 15, 3, 5, 1.2, 0); // 'uflow' is the DOF matrix result
+			/* **OPTFLOW_USE_INITIAL_FLOW** uses the input flow as an initial flow approximation.
+			   **OPTFLOW_FARNEBACK_GAUSSIAN** uses the Gaussian \f$\texttt{winsize}\times\texttt{winsize}\f$
+				
+			/*	CV_EXPORTS_W void calcOpticalFlowFarneback( InputArray prev, InputArray next, InputOutputArray flow,
+					double pyr_scale, int levels, int winsize,
+					int iterations, int poly_n, double poly_sigma,
+					int flags );
+*/
+			calcOpticalFlowFarneback(prevgray, gray, uflow,
+				0.5, 3, 15, 
+				3, 5, 1.2, 
+				0); // 'uflow' is the DOF matrix result
 
 			if (App_Parameters.flags.measure_actions_timing){
 				t								= 1000*((double)getTickCount() - t)/getTickFrequency();
@@ -131,13 +154,15 @@ int main(int argc, char** argv)
 														// TODO: add frame counter on top of image to display. in corner
 			uflow.copyTo(flow);			// copy UMAT to MAT
 			cflow.copyTo(cflow2);
-			drawOptFlowMap(flow, cflow, 10/*16*/, 15, Scalar(0, 255, 0)); // every 16 pixels flow is displayed. 
+			drawOptFlowMap(flow, cflow, 10/*16*/, 5.0/*1.5*/, Scalar(0, 255, 0)); // every 16 pixels flow is displayed. 
 			imshow("flow", cflow);
 
 			//////////////////////////*  algorithm section 3.1 *///////////////////////////
 
 			/* calculate votes for this frame. by optical flow input */
 			// returns motion boundaries as 'frame_votes'
+			
+			////flow = cvRound (flow);	/// addition 
 			calc_motion_boundaries(flow, frame_votes);////////////////////////////
 
 			//////////////////////////*  algorithm section 3.2 *///////////////////////////
@@ -169,7 +194,8 @@ int main(int argc, char** argv)
 
 				//	
 #ifndef DEBUG
-					///writeMat(flow, cF, st); //get returned byte . send number of images to be saved
+					///
+				writeMat(flow, cF, st); //get returned byte . send number of images to be saved
 #endif
 
 				/****************** save the current votes matrix ******************/
@@ -180,7 +206,8 @@ int main(int argc, char** argv)
 				
 				//
 #ifndef DEBUG
-			///	writeMat(frame_votes, cV, "inMaps"); //get returned byte . send number of images to be saved
+			///	
+				writeMat(frame_votes, cV, "inMaps"); //get returned byte . send number of images to be saved
 #endif
 				/* save also the current SLIC matrix ?*/
 			}

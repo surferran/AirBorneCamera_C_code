@@ -6,7 +6,7 @@ http://code.opencv.org/issues/1342
 * I, Philip G. Lee, hereby disclaim any Copyright that I might hold
  * by default.
  */
-
+ 
 #include <opencv2/opencv.hpp>
 #include <stdlib.h>
 #include <stdio.h>
