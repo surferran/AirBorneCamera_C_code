@@ -117,7 +117,7 @@ void calc_Spatial_distances_and_Weights(unsigned int	*sources, unsigned int	*tar
 
 	/*Vij_list */
 	*sum_Out	=	0 ;
-	for (int i=0; i< vectors_length; i++)
+	for (unsigned int i=0; i< vectors_length; i++)
 	{
 		Vij[i]		=	exp( -betaSpatial * color_dist[i] ) / center_dist[i] ;
 		*sum_Out   +=	(*alpha2) * Vij[i];
@@ -170,11 +170,12 @@ void calc_Temporal_distances_and_Weights(	unsigned int	*sources, unsigned int	*t
 		*sum_Out   +=	(*alpha3) * Wij[i];
 	}
 }
-
+ 
+                   
 // algorithm functions. section 3.2 in the article //
 // calcualte spatial and temporal functions //
-void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &flow, long long superPixels_accumulated,
-								double *pairWise_Weight)
+void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat &flow, 
+									/*unsigned */long /*long*/ superPixels_accumulated,	double *pairWise_Weight)
 {
 	//similar to the original code and article algorithm.
 	// calculate V,W  matrices.
@@ -185,11 +186,11 @@ void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat
 	finish calculations according to the article equations 8,9 */
 	/*getSpatialConnections using the superpixel segmentation */
 	
-
+	 
 	//convert segmented_slic.clusters to required input format
 	size_t		W				= segmented_slic->return_clusters_size();		// assumed same for current and previous frames
 	size_t		H				= segmented_slic->return_clusters_size2();		// -"-
-	long long	num_of_sPixels	= segmented_slic->return_num_of_superpixels() ; 
+	unsigned long long	num_of_sPixels	= segmented_slic->return_num_of_superpixels() ; 
 
 		// ref: convert vector to array pointer by : http://stackoverflow.com/questions/1733143/converting-between-c-stdvector-and-c-array-without-copying
 		//		or : http://stackoverflow.com/questions/6946217/pointer-to-a-vector
@@ -258,20 +259,20 @@ void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat
 	//  alpha2 * sum(Vij) + alpha3 * sum(Wij)
 	*pairWise_Weight	=	Spatial_part + Temporal_part ;
 
-	if ( converted_Mat_flow	)			delete converted_Mat_flow;
-	if (converted_vector2d_slic) 		delete converted_vector2d_slic; 
-	if (converted_vector2d_prevSlic) 	delete converted_vector2d_prevSlic; 
-	if (spatial_sources)				delete spatial_sources; 
-	if (spatial_targets)				delete spatial_targets; 
-	if (temporal_sources)				delete temporal_sources; 
-	if (temporal_targets)				delete temporal_targets; 
-	if (connectionRatio)				delete connectionRatio;
+	if ( converted_Mat_flow	)			delete [] converted_Mat_flow;
+	if (converted_vector2d_slic) 		delete [] converted_vector2d_slic; 
+	if (converted_vector2d_prevSlic) 	delete [] converted_vector2d_prevSlic; 
+	if (spatial_sources)				delete [] spatial_sources; 
+	if (spatial_targets)				delete [] spatial_targets; 
+	if (temporal_sources)				delete [] temporal_sources; 
+	if (temporal_targets)				delete [] temporal_targets; 
+	if (connectionRatio)				delete [] connectionRatio;
 
-	if (spatial_color_dist)				delete spatial_color_dist;
-	if (spatial_center_dist)			delete spatial_center_dist;
-	if (temporal_color_dist)			delete temporal_color_dist;
-	if (Vij)							delete Vij;
-	if (Wij)							delete Wij;
+	if (spatial_color_dist)				delete [] spatial_color_dist;
+	if (spatial_center_dist)			delete [] spatial_center_dist;
+	if (temporal_color_dist)			delete [] temporal_color_dist;
+	if (Vij)							delete [] Vij;
+	if (Wij)							delete [] Wij;
 
 }
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -319,14 +320,14 @@ void calc_inRatios(Slic *segmented_slic, Mat &votes, float  * inRatios)
 
 //	calcSuperpixelInRatio(converted_vector2d_slic, H, W, &num_of_sPixels, converted_Mat_Votes, inRatios );
 
-	if ( converted_Mat_Votes	)		delete converted_Mat_Votes;
-	if (converted_vector2d_slic) 		delete converted_vector2d_slic; 
-	if (converted_vector2d_prevSlic) 	delete converted_vector2d_prevSlic; 
-	if (spatial_sources)				delete spatial_sources; 
-	if (spatial_targets)				delete spatial_targets; 
-	if (temporal_sources)				delete temporal_sources; 
-	if (temporal_targets)				delete temporal_targets; 
-	if (connectionRatio)				delete connectionRatio;
+	if ( converted_Mat_Votes	)		delete [] converted_Mat_Votes;
+	if (converted_vector2d_slic) 		delete [] converted_vector2d_slic; 
+	if (converted_vector2d_prevSlic) 	delete [] converted_vector2d_prevSlic; 
+	if (spatial_sources)				delete [] spatial_sources; 
+	if (spatial_targets)				delete [] spatial_targets; 
+	if (temporal_sources)				delete [] temporal_sources; 
+	if (temporal_targets)				delete [] temporal_targets; 
+	if (connectionRatio)				delete [] connectionRatio;
 
 }
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -376,13 +377,13 @@ void calc_unary_potentials(Slic *segmented_slic, Mat &frame_Votes)
 		maxflow_mex_optimisedWrapper
 
 	 */
-	if ( converted_Mat_flow	)			delete converted_Mat_flow;
-	if (converted_vector2d_slic) 		delete converted_vector2d_slic; 
-	if (converted_vector2d_prevSlic) 	delete converted_vector2d_prevSlic; 
-	if (spatial_sources)				delete spatial_sources; 
-	if (spatial_targets)				delete spatial_targets; 
-	if (temporal_sources)				delete temporal_sources; 
-	if (temporal_targets)				delete temporal_targets; 
-	if (connectionRatio)				delete connectionRatio;
+	if ( converted_Mat_flow	)			delete [] converted_Mat_flow;
+	if (converted_vector2d_slic) 		delete [] converted_vector2d_slic; 
+	if (converted_vector2d_prevSlic) 	delete [] converted_vector2d_prevSlic; 
+	if (spatial_sources)				delete [] spatial_sources; 
+	if (spatial_targets)				delete [] spatial_targets; 
+	if (temporal_sources)				delete [] temporal_sources; 
+	if (temporal_targets)				delete [] temporal_targets; 
+	if (connectionRatio)				delete [] connectionRatio;
 
 }

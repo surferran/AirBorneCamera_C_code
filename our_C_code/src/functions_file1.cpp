@@ -1,5 +1,9 @@
 #include "functions_file1.hpp"
 
+#ifndef DEBUG
+#include "some_utils\writeMat.hpp" 
+#endif
+
 void help_app()
 {
 	cout <<
@@ -369,7 +373,7 @@ void calc_total_8_votes(Mat& out1, Mat& out2, Mat& out3, Mat& out4, Mat& totalVo
 }
 
 // algorithm functions. section 3.1 in the article //
-void calc_motion_boundaries(const Mat &flow, Mat &totalVotes){
+void calc_motion_boundaries(const Mat &flow, int *frame_prev_number, Mat &totalVotes){
 	//extraxt x and y channels
 	cv::Mat xy[2];	
 	cv::split(flow, xy);	//X,Y
@@ -413,13 +417,13 @@ void calc_motion_boundaries(const Mat &flow, Mat &totalVotes){
 
 	phase(xy[0], xy[1], angle);					// angle in radians
 	magnitude(flow_grad_X, flow_grad_Y, flow_grad_magnitude);
-
+	
 	if (App_Parameters.flags.allow_debug_plots_1)
 	{
 		imshow("flow_grad_magnitude"	,flow_grad_magnitude);
 		imshow("angle"					,angle);
 	}
-	
+		
 	Mat tmp,	tmp2,
 		bpm,	bptheta,	bp,
 		S1,		S2,			S3,		S4;
@@ -439,6 +443,22 @@ void calc_motion_boundaries(const Mat &flow, Mat &totalVotes){
 	/* getting a binaric Bp matrix */ 
 	calc_bp_total(bpm, bptheta, bp);
 	imshow("B_P total",bp);
+
+	if (App_Parameters.flags.export_frames_to_Mat) 
+	{
+		string	framesCounterStr	= ""	, base_file_name = "" , file_full_name="", file_suffix = ".mat";	//base_file_name outMAt_
+		string	base_out_file_path	= "../work_files/out_as_Mat/";
+
+		base_file_name = "bpTotal_";
+		file_full_name = base_out_file_path + base_file_name + std::to_string(*frame_prev_number+1) + file_suffix;
+		const char * cB = file_full_name.c_str();
+		const char * st = "bpTotal";
+#ifndef DEBUG
+		//writeMat(bp, cB, st); //get returned byte . send number of images to be saved
+#endif
+	}
+
+
 
 	/////////////////////////////////////////
 	Size	sz		= bp.size();

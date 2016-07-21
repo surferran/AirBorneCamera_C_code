@@ -3,7 +3,7 @@
 // Usage :
 //	change file names in code
 
-#include "composed_algorithm.hpp"
+#include "composed_algorithm.hpp"  
  
 
 #ifndef DEBUG
@@ -23,11 +23,11 @@ vector<Storage_4_frames>	alg_DB_vec;
 int main(int argc, char** argv)
 {
 	/* user operational flags must be adjusted hard coded in */
-	bool vid_from_file	=  App_Parameters.flags.read_from_file;
+	bool vid_from_file	=  false;//App_Parameters.flags.read_from_file; 
 	int  vid_resize_W	=  App_Parameters.flags.frame_resize_W;
 	int  vid_resize_H	=  App_Parameters.flags.frame_resize_H; 
 	int  resize_factor	=  App_Parameters.flags.resize_factor; 
-	bool file_from_imList = true;
+	bool file_from_imList = false;
 
 	string images_list_BasePath = "C:/Users/Ran_the_User/Documents/GitHub/AirBorneCamera_A/Selected article/FastVideoSegment_Files/Data/inputs/animals/";
 	string file_format			= "0000%04d.jpg";    //enables to go through set of frames
@@ -50,9 +50,11 @@ int main(int argc, char** argv)
 			//			char			rec_file_name[150] = "../work_files/matlab_Aid/triangle.avi";
 			//char			rec_file_name[150] = "../work_files/car2.mov";
 			//char			rec_file_name[150] = "../work_files/car2.mov";
+			//				char			rec_file_name[150] = "../work_files/matlab_Aid/square001.avi";
+			
+				//			char			rec_file_name[150] = "../work_files/matlab_Aid/circle.avi";
 			//	
-			char			rec_file_name[150] = "../work_files/matlab_Aid/square001.avi";
-			//			char			rec_file_name[150] = "../work_files/matlab_Aid/circle.avi";
+				char			rec_file_name[150] = "../work_files/SQ8bike.mp4";
 			cap					= VideoCapture(rec_file_name);
 		}
 		else{
@@ -76,7 +78,7 @@ int main(int argc, char** argv)
 	double	measure_times[100000]; // for keeping times. // this is a trial item									
 
 	int					frame_counter = 0 ;
-	long long			superPixels_accumulated =0; // accumulated through frames.
+	long /*long*/			superPixels_accumulated =0; // accumulated through frames.
 	long				current_frame_sPixelsNum = 0;
 	long				startingOffset	=0;
 	vector<long>		sPixels_bounds;
@@ -90,8 +92,10 @@ int main(int argc, char** argv)
 
 	//////// trial addition .  massing up...
 
-	///stabilizer_main(cap);
-	///return 0;
+	///	
+	stabilizer_main(cap);
+	///	
+	return 0;
 
 	/////
 
@@ -138,12 +142,18 @@ int main(int argc, char** argv)
 					double pyr_scale, int levels, int winsize,
 					int iterations, int poly_n, double poly_sigma,
 					int flags );
-*/
+*/    
 			calcOpticalFlowFarneback(prevgray, gray, uflow,
 				0.5, 3, 15, 
 				3, 5, 1.2, 
-				0); // 'uflow' is the DOF matrix result
+				0 ); // 'uflow' is the DOF matrix result 
 
+		 /*	
+				calcOpticalFlowFarneback(prevgray, gray, uflow,
+					0.5, 10, 15, 
+					5, 5, 0.8, 
+					OPTFLOW_FARNEBACK_GAUSSIAN ); // 'uflow' is the DOF matrix result , 0 flags
+*/
 			if (App_Parameters.flags.measure_actions_timing){
 				t								= 1000*((double)getTickCount() - t)/getTickFrequency();
 				measure_times[frame_counter]	= t;
@@ -163,13 +173,14 @@ int main(int argc, char** argv)
 			// returns motion boundaries as 'frame_votes'
 			
 			////flow = cvRound (flow);	/// addition 
-			calc_motion_boundaries(flow, frame_votes);////////////////////////////
+			calc_motion_boundaries(flow, &stream_frame_index, frame_votes);////////////////////////////
 
 			//////////////////////////*  algorithm section 3.2 *///////////////////////////
 
 			// calculate the pairWise potentials weights for the 2 sub-sequent frames.
 			// return the relevant part for the major E() function.
 			double pairWise_Weight	=	0;
+			////
 			calc_pairwisePotentials( &SlicOutput ,&prevSlicOutput, flow, superPixels_accumulated, &pairWise_Weight); 
 			// TODO: in order to use those for more than 2 frames at a time - one must keep all X frames in a global struct
 			//			and pass them to that main function. 
@@ -194,8 +205,7 @@ int main(int argc, char** argv)
 
 				//	
 #ifndef DEBUG
-					///
-				writeMat(flow, cF, st); //get returned byte . send number of images to be saved
+					///						writeMat(flow, cF, st,true,0); //get returned byte . send number of images to be saved
 #endif
 
 				/****************** save the current votes matrix ******************/
@@ -206,8 +216,7 @@ int main(int argc, char** argv)
 				
 				//
 #ifndef DEBUG
-			///	
-				writeMat(frame_votes, cV, "inMaps"); //get returned byte . send number of images to be saved
+			///					writeMat(frame_votes, cV, "inMaps"); //get returned byte . send number of images to be saved
 #endif
 				/* save also the current SLIC matrix ?*/
 			}
