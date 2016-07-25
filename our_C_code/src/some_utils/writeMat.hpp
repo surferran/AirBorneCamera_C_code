@@ -12,6 +12,8 @@ http://code.opencv.org/issues/1342
 #include <stdio.h>
 #include <stdint.h>
 
+using namespace cv;  
+
 /*!
  *  \author Philip G. Lee <rocketman768@gmail.com>
  *  Write \b mat into \b filename
@@ -28,7 +30,7 @@ http://code.opencv.org/issues/1342
 //#define _CRT_SECURE_NO_WARNINGS  // in order to disable:  error C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 //#pragma warning(disable : 4996)
 
-// added writeMode 0 for create, 1 for append
-void writeMat( cv::Mat const& mat, const char* filename, const char* varName = "A", bool bgr2rgb = true , int writeMode = 0);
+// added writeMode 0 for create, 1 for append 
+void writeMat( cv::Mat const& mat, const char* filename, const char* varName = "A", bool bgr2rgb = true , int writeMode = 0); 
 
 #endif

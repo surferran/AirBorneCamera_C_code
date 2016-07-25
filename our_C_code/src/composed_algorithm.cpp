@@ -97,7 +97,7 @@ void calc_Spatial_distances_and_Weights(unsigned int	*sources, unsigned int	*tar
 		dist2 = ( centers[source_label][1] - centers[target_label][1] );
 		dist2 = dist2 * dist2;
 		dist3 = ( centers[source_label][2] - centers[target_label][2] );
-		dist3 = dist3 * dist3;
+		dist3 = dist3 * dist3; 
 		color_dist[i] = dist1 + dist2 + dist3;
 		 
 		/* dis(Si,Sj) for different(unique) i,j labels */
@@ -214,8 +214,8 @@ void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat
 
 	copy_vectors_to_array(W,H,segmented_slic,converted_vector2d_slic); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
 
-	calcSpatialConnections(	converted_vector2d_slic , H, W, num_of_sPixels ,
-							spatial_sources, spatial_targets, &spatial_vectors_len);
+	///calcSpatialConnections(	converted_vector2d_slic , H, W, num_of_sPixels ,
+	///						spatial_sources, spatial_targets, &spatial_vectors_len);
 
 	/////////
 

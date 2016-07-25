@@ -3,31 +3,23 @@
 // Usage :
 //	change file names in code
 
-#include "composed_algorithm.hpp"  
- 
+#include "composed_algorithm.hpp"   
 
-#ifndef DEBUG
 #include "some_utils\writeMat.hpp" 
-#endif
 
 Storage_4_frames			alg_database_current;
 vector<Storage_4_frames>	alg_DB_vec;
-
-
-//added trial files
-#include "tested_sources\mySimpleVideoStabilizer.cpp"
-
 
 //////////////
 
 int main(int argc, char** argv)
 {
 	/* user operational flags must be adjusted hard coded in */
-	bool vid_from_file	=  false;//App_Parameters.flags.read_from_file; 
+	bool vid_from_file	=  App_Parameters.flags.read_from_file; 
 	int  vid_resize_W	=  App_Parameters.flags.frame_resize_W;
 	int  vid_resize_H	=  App_Parameters.flags.frame_resize_H; 
 	int  resize_factor	=  App_Parameters.flags.resize_factor; 
-	bool file_from_imList = false;
+	bool file_from_imList = true;
 
 	string images_list_BasePath = "C:/Users/Ran_the_User/Documents/GitHub/AirBorneCamera_A/Selected article/FastVideoSegment_Files/Data/inputs/animals/";
 	string file_format			= "0000%04d.jpg";    //enables to go through set of frames
@@ -88,17 +80,6 @@ int main(int argc, char** argv)
 	Slic		SlicOutput , prevSlicOutput;
 
 	namedWindow("flow", 1); 
-
-
-	//////// trial addition .  massing up...
-
-	///	
-	stabilizer_main(cap);
-	///	
-	return 0;
-
-	/////
-
 
 	for(;;)
 	{
@@ -203,21 +184,16 @@ int main(int argc, char** argv)
 				const char * cF = file_full_name.c_str();
 				const char * st = "DOFframe";
 
-				//	
-#ifndef DEBUG
-					///						writeMat(flow, cF, st,true,0); //get returned byte . send number of images to be saved
-#endif
+				writeMat(flow, cF, st);//,true,0); //get returned byte . send number of images to be saved
 
 				/****************** save the current votes matrix ******************/
 				base_file_name = "votes_";
 				file_full_name = base_out_file_path + base_file_name + std::to_string(  stream_frame_index) + file_suffix;
 
 				const char * cV = file_full_name.c_str();
-				
-				//
-#ifndef DEBUG
-			///					writeMat(frame_votes, cV, "inMaps"); //get returned byte . send number of images to be saved
-#endif
+											
+				writeMat(frame_votes, cV, "inMaps"); //get returned byte . send number of images to be saved
+
 				/* save also the current SLIC matrix ?*/
 			}
 

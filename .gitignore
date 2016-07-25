@@ -64,3 +64,7 @@ our_C_code/AirborneCamera/Debug/vc140.pdb
 *.log
 *.suo
 *.mat
+our_C_code/AirborneCamera/Debug/calcintegralintersections.nativecodeanalysis.xml
+*.rar
+*.log
+*.log

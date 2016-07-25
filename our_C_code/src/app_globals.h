@@ -30,8 +30,8 @@ struct Alg_parameters {
 
 };
 
-struct App_flags {
-	bool	read_from_file			= false;    // true-read video file. false - for live capture from camera(0)
+struct App_flags {  
+	bool	read_from_file			= true;    // true-read video file. false - for live capture from camera(0)
 	bool	measure_actions_timing	= true;		// to measure spesific calculations timings
 	bool	record_outputs			= false;	// save frames into physical .avi files.
 	bool	export_frames_to_Mat	= true;	// TODO: save frames into seperate .mat files. // for optical flow & votes
@@ -43,7 +43,7 @@ struct App_flags {
 
 	bool	allow_debug_plots_1		= false;		// plots in section calc_motion_boundaries() begining
 	bool	allow_debug_plots_2		= false;		// plots in section calc_motion_boundaries() middle
-};
+}; 
 
 ////////////////////////////////////////////////////////////////
 

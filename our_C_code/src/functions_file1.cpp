@@ -1,8 +1,6 @@
 #include "functions_file1.hpp"
 
-#ifndef DEBUG
-#include "some_utils\writeMat.hpp" 
-#endif
+#include "some_utils\writeMat.hpp"
 
 void help_app()
 {
@@ -453,9 +451,8 @@ void calc_motion_boundaries(const Mat &flow, int *frame_prev_number, Mat &totalV
 		file_full_name = base_out_file_path + base_file_name + std::to_string(*frame_prev_number+1) + file_suffix;
 		const char * cB = file_full_name.c_str();
 		const char * st = "bpTotal";
-#ifndef DEBUG
-		//writeMat(bp, cB, st); //get returned byte . send number of images to be saved
-#endif
+
+		writeMat(bp, cB, st); //get returned byte . send number of images to be saved
 	}
 
 
@@ -476,56 +473,69 @@ void calc_motion_boundaries(const Mat &flow, int *frame_prev_number, Mat &totalV
 	copy_ucharArray_to_binaricMat(w,h, flattened_total_votes, totalVotes) ;
 	imshow("total votes REF",totalVotes);
 
-	delete flattened_bp;
-	delete flattened_total_votes;
+	delete [] flattened_bp;
+	delete [] flattened_total_votes;
 	//////////////////////////////////////////
 
-	/************* part of 'calc_S_matrices' ******************/
-	// calculate votes for several directions :
-	calc_votes_1(bp,S1);			//horizontal DIRECTION
-											//imshow("new vote1",out1);
+	if (App_Parameters.flags.export_frames_to_Mat) 
+	{
+		string	framesCounterStr	= ""	, base_file_name = "" , file_full_name="", file_suffix = ".mat";	//base_file_name outMAt_
+		string	base_out_file_path	= "../work_files/out_as_Mat/";
 
-	transpose(bp, tmp); // original bp is now transposed into 'tmp'
-	calc_votes_1(tmp,S2);			//vertical DIRECTION
-	transpose(S2, S2);	// transpose back the outcome
-							//imshow("new vote2",out2);
+		base_file_name = "VotesTotal_";
+		file_full_name = base_out_file_path + base_file_name + std::to_string(*frame_prev_number+1) + file_suffix;
+		const char * cB = file_full_name.c_str();
+		const char * st = "VotesTotal";
 
-	calc_votes_2(bp, S3);	// calc diagonal crosses 
-									//imshow("new vote3",out3);
+		writeMat(totalVotes, cB, st); //get returned byte . send number of images to be saved
+	}
 
-	float *p;
-	float *pO;
-	tmp2 = bp.clone();
-	////set tmp2 as pb flipped in columns
-	//for ( int i = 0 ; i < bp.rows ; ++i )
-	//{
-	//	p	= bp.ptr<float>(i);
-	//	pO	= tmp2.ptr<float>(i);
-	//	for ( int j = 0 ; j < bp.cols ; ++j )
-	//	{		
-	//		pO[j]=p[bp.cols-1-j];		
-	//	}
-	//}
-	flip(bp,tmp2,1);
-	///imshow("tmp bp flippedd",tmp2);
-	calc_votes_2(tmp2, S4);	// calc diagonal crosses 
-										//out4 = out4.clone();
-										///imshow("tmp2 output",tmp2);
-										//// set the output flipped again										
-										//for ( int i = 0 ; i < tmp2.rows ; ++i )
-										//{
-										//	p	= tmp2.ptr<float>(i);
-										//	pO	= out4.ptr<float>(i);
-										//	for ( int j = 0 ; j < tmp2.cols ; ++j )
-										//	{		
-										//		pO[j]=p[tmp2.cols-1-j];		
-										//	}
-										//}
-	flip(tmp2,S4,1);
-	//imshow("new vote4",out4);
+	///************* part of 'calc_S_matrices' ******************/
+	//// calculate votes for several directions :
+	//calc_votes_1(bp,S1);			//horizontal DIRECTION
+	//										//imshow("new vote1",out1);
 
-	calc_total_8_votes(S1,S2,S3,S4,totalVotes);
-	imshow("total votes",totalVotes);
+	//transpose(bp, tmp); // original bp is now transposed into 'tmp'
+	//calc_votes_1(tmp,S2);			//vertical DIRECTION
+	//transpose(S2, S2);	// transpose back the outcome
+	//						//imshow("new vote2",out2);
+
+	//calc_votes_2(bp, S3);	// calc diagonal crosses 
+	//								//imshow("new vote3",out3);
+
+	//float *p;
+	//float *pO;
+	//tmp2 = bp.clone();
+	//////set tmp2 as pb flipped in columns
+	////for ( int i = 0 ; i < bp.rows ; ++i )
+	////{
+	////	p	= bp.ptr<float>(i);
+	////	pO	= tmp2.ptr<float>(i);
+	////	for ( int j = 0 ; j < bp.cols ; ++j )
+	////	{		
+	////		pO[j]=p[bp.cols-1-j];		
+	////	}
+	////}
+	//flip(bp,tmp2,1);
+	/////imshow("tmp bp flippedd",tmp2);
+	//calc_votes_2(tmp2, S4);	// calc diagonal crosses 
+	//									//out4 = out4.clone();
+	//									///imshow("tmp2 output",tmp2);
+	//									//// set the output flipped again										
+	//									//for ( int i = 0 ; i < tmp2.rows ; ++i )
+	//									//{
+	//									//	p	= tmp2.ptr<float>(i);
+	//									//	pO	= out4.ptr<float>(i);
+	//									//	for ( int j = 0 ; j < tmp2.cols ; ++j )
+	//									//	{		
+	//									//		pO[j]=p[tmp2.cols-1-j];		
+	//									//	}
+	//									//}
+	//flip(tmp2,S4,1);
+	////imshow("new vote4",out4);
+
+	//calc_total_8_votes(S1,S2,S3,S4,totalVotes);
+	//imshow("total votes",totalVotes);
 
 
 }

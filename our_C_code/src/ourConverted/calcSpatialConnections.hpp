@@ -1,7 +1,6 @@
 #ifndef SPATIAL_CONNECTIONS_HPP
 #define SPATIAL_CONNECTIONS_HPP 
-
-#include <iostream>
+ 
 #include <set>    
     
 void calcSpatialConnections(unsigned int *superpixelMap,	// the superpixels segmantation matrix

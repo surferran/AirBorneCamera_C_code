@@ -43,14 +43,8 @@
     <ClCompile Include="..\src\composed_algorithm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\some_utils\writeMat.hpp">
-      <Filter>Header Files\some_utils</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\some_utils\writeMat.cpp">
       <Filter>Source Files\some_utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\ourConverted\calcSpatialConnections.hpp">
-      <Filter>Header Files\part1</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ourConverted\calcSpatialConnections.cpp">
       <Filter>Source Files\part1</Filter>
@@ -78,9 +72,6 @@
     <ClInclude Include="..\src\SLIC_opencv_implemented\slic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\composed_algorithm.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\ourConverted\calcTemporalConnections.hpp">
       <Filter>Header Files\part1</Filter>
     </ClInclude>
@@ -89,6 +80,15 @@
     </ClInclude>
     <ClInclude Include="..\src\functions_file1.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\composed_algorithm.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\some_utils\writeMat.hpp">
+      <Filter>Header Files\some_utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ourConverted\calcSpatialConnections.hpp">
+      <Filter>Header Files\part1</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

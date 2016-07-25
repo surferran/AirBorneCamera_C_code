@@ -1,7 +1,6 @@
 #include "writeMat.hpp"
-
-//void writeMat( cv::Mat const& mat, const char* filename, const char* varName = "A", bool bgr2rgb = true , int writeMode = 0)
-void writeMat( cv::Mat const& mat, const char* filename, const char* varName, bool bgr2rgb , int writeMode)
+ 
+void writeMat( cv::Mat const& mat, const char* filename, const char* varName, bool bgr2rgb , int writeMode) 
 {
    int textLen = 116;
    char* text;

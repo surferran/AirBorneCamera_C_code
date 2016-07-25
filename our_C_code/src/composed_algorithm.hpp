@@ -3,17 +3,15 @@
 
 #include <iostream>
 #include "opencv2/opencv.hpp"
-//#include "Slic.h"
 
-using namespace cv;
+using namespace cv;  
 using namespace std;
 
-#include "app_globals.h"
+#include "app_globals.h"   
 #include "ourConverted\calcSpatialConnections.hpp"
 #include "ourConverted\calcTemporalConnections.hpp"
 #include "ourConverted\calcSuperpixelInRatio.hpp"
 #include "functions_file1.hpp"
-#include "some_utils\writeMat.hpp" 
 
 //#include <ctime>				// ref by : http://stackoverflow.com/questions/2808398/easily-measure-elapsed-time 
 

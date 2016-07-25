@@ -1,8 +1,5 @@
 #ifndef TEMPORAL_CONNECTIONS_HPP
-#define TEMPORAL_CONNECTIONS_HPP 
-
-//#include "calcTemporalConnections.hpp"
-//#include <matrix.h> #include <iostream>
+#define TEMPORAL_CONNECTIONS_HPP  
 
 #include <map>
 
