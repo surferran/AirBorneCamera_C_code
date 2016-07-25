@@ -214,8 +214,8 @@ void calc_pairwisePotentials(Slic *segmented_slic,Slic *prev_segmented_slic, Mat
 
 	copy_vectors_to_array(W,H,segmented_slic,converted_vector2d_slic); // returns 1D array for Mat representation. so arr[i][j] is for arr[row1 row2 .. rowN] flattened.
 
-	///calcSpatialConnections(	converted_vector2d_slic , H, W, num_of_sPixels ,
-	///						spatial_sources, spatial_targets, &spatial_vectors_len);
+	calcSpatialConnections(	converted_vector2d_slic , H, W, num_of_sPixels ,
+							spatial_sources, spatial_targets, &spatial_vectors_len);
 
 	/////////
 

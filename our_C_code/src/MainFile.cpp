@@ -83,6 +83,10 @@ int main(int argc, char** argv)
 
 	for(;;)
 	{
+
+		if( !cap.isOpened() ) 
+			break; 
+
 		cap >> frame;
 		if (frame.empty())
 			break;
@@ -124,12 +128,13 @@ int main(int argc, char** argv)
 					int iterations, int poly_n, double poly_sigma,
 					int flags );
 */    
+			// original configuration
 			calcOpticalFlowFarneback(prevgray, gray, uflow,
 				0.5, 3, 15, 
 				3, 5, 1.2, 
 				0 ); // 'uflow' is the DOF matrix result 
 
-		 /*	
+		 /*		//my trial configuration
 				calcOpticalFlowFarneback(prevgray, gray, uflow,
 					0.5, 10, 15, 
 					5, 5, 0.8, 
