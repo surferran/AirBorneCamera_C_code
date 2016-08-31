@@ -115,6 +115,7 @@ int main(int argc, char** argv)
 
 		if( !prevgray.empty() )
 		{ 
+			cout<<frame_counter<< endl;
 			//////////////////////////*  optical flow *///////////////////////////
 			if (App_Parameters.flags.measure_actions_timing)
 				t = (double)getTickCount();
@@ -130,8 +131,11 @@ int main(int argc, char** argv)
 */    
 			// original configuration
 			calcOpticalFlowFarneback(prevgray, gray, uflow,
-				0.5, 3, 15, 
-				3, 5, 1.2, 
+				//0.5, 3, 45, //myChange
+				0.5, 3, 15,	//ORG
+				//3, 5, 1.2,	//ORG
+				//5,3,0.9,	//myChange
+				5,7,1.9,	//myChange
 				0 ); // 'uflow' is the DOF matrix result 
 
 		 /*		//my trial configuration

@@ -34,7 +34,7 @@ struct App_flags {
 	bool	read_from_file			= true;    // true-read video file. false - for live capture from camera(0)
 	bool	measure_actions_timing	= true;		// to measure spesific calculations timings
 	bool	record_outputs			= false;	// save frames into physical .avi files.
-	bool	export_frames_to_Mat	= true;	// TODO: save frames into seperate .mat files. // for optical flow & votes
+	bool	export_frames_to_Mat	= true;		//  save frames into seperate .mat files. // for optical flow & votes
 	bool	do_frame_resize			= false;		// allow to choose if resizing input-frame or not
 
 	int		resize_factor			=	1;		// make 1/factor
